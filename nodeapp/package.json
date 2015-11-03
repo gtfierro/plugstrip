@@ -1,0 +1,27 @@
+{
+    "name": "plugstrip",
+    "version": "0.0.1",
+    "private": true,
+    "scripts": {
+        "start": "node app.js"
+    },
+    "dependencies": {
+        "express": "*",
+        "socket.io": "*",
+        "ws": "*",
+        "underscore":"*",
+        "moment":"*",
+        "multer":"*",
+        "body-parser":"*",
+        "request":"*",
+        "express-handlebars":"*",
+        "wrappy":"*",
+        "bson":"~0.2",
+        "brace-expansion":"*",
+        "passport-local":"*",
+        "express-session":"*",
+        "passport":"*",
+        "cookie-parser":"*",
+        "mongoskin": "*"
+    }
+}
