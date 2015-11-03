@@ -76,6 +76,23 @@
 <text x="-1.9" y="3.6" size="0.8128" layer="25">&gt;NAME</text>
 <text x="-2" y="-4.1" size="0.8128" layer="27">&gt;VALUE</text>
 </package>
+<package name="ACS711">
+<smd name="P$8" x="-1.905" y="2.8" dx="1.75" dy="0.65" layer="1" rot="R90"/>
+<smd name="P$7" x="-0.635" y="2.8" dx="1.75" dy="0.65" layer="1" rot="R90"/>
+<smd name="P$6" x="0.635" y="2.8" dx="1.75" dy="0.65" layer="1" rot="R90"/>
+<smd name="P$5" x="1.905" y="2.8" dx="1.75" dy="0.65" layer="1" rot="R90"/>
+<smd name="P$1" x="-1.905" y="-2.8" dx="1.75" dy="0.65" layer="1" rot="R90"/>
+<smd name="P$2" x="-0.635" y="-2.8" dx="1.75" dy="0.65" layer="1" rot="R90"/>
+<smd name="P$3" x="0.635" y="-2.8" dx="1.75" dy="0.65" layer="1" rot="R90"/>
+<smd name="P$4" x="1.905" y="-2.8" dx="1.75" dy="0.65" layer="1" rot="R90"/>
+<wire x1="-2.5" y1="2" x2="2.5" y2="2" width="0.127" layer="51"/>
+<wire x1="2.5" y1="2" x2="2.5" y2="-2" width="0.127" layer="51"/>
+<wire x1="2.5" y1="-2" x2="-2.5" y2="-2" width="0.127" layer="51"/>
+<wire x1="-2.5" y1="-2" x2="-2.5" y2="2" width="0.127" layer="51"/>
+<circle x="-1.9" y="-1.4" radius="0.3" width="0.127" layer="21"/>
+<text x="-2.6" y="4.5" size="1.27" layer="25">&gt;NAME</text>
+<text x="-2.8" y="-6.2" size="1.27" layer="27">&gt;VALUE</text>
+</package>
 </packages>
 <symbols>
 <symbol name="ADS1013">
@@ -95,6 +112,22 @@
 <wire x1="15.24" y1="10.16" x2="-15.24" y2="10.16" width="0.254" layer="94"/>
 <text x="-15.24" y="15.24" size="2.54" layer="95">&gt;NAME</text>
 <text x="-15.24" y="-15.24" size="2.54" layer="96">&gt;VALUE</text>
+</symbol>
+<symbol name="ACS711">
+<pin name="IP+@1" x="-17.78" y="7.62" length="middle"/>
+<pin name="IP+@2" x="-17.78" y="2.54" length="middle"/>
+<pin name="IP-@1" x="-17.78" y="-2.54" length="middle"/>
+<pin name="IP-@2" x="-17.78" y="-7.62" length="middle"/>
+<pin name="VCC" x="12.7" y="7.62" length="middle" direction="pwr" rot="R180"/>
+<pin name="VIOUT" x="12.7" y="2.54" length="middle" rot="R180"/>
+<pin name="FAULT" x="12.7" y="-2.54" length="middle" rot="R180"/>
+<pin name="GND" x="12.7" y="-7.62" length="middle" direction="pwr" rot="R180"/>
+<wire x1="-12.7" y1="10.16" x2="-12.7" y2="-10.16" width="0.254" layer="94"/>
+<wire x1="-12.7" y1="-10.16" x2="7.62" y2="-10.16" width="0.254" layer="94"/>
+<wire x1="7.62" y1="-10.16" x2="7.62" y2="10.16" width="0.254" layer="94"/>
+<wire x1="7.62" y1="10.16" x2="-12.7" y2="10.16" width="0.254" layer="94"/>
+<text x="-12.7" y="15.24" size="2.54" layer="95">&gt;NAME</text>
+<text x="-12.7" y="-17.78" size="2.54" layer="96">&gt;VALUE</text>
 </symbol>
 </symbols>
 <devicesets>
@@ -118,6 +151,31 @@ http://www.digikey.com/product-detail/en/ADS1013IDGST/296-25225-1-ND/2174995</de
 <connect gate="G$1" pin="SCL" pad="P$10"/>
 <connect gate="G$1" pin="SDA" pad="P$9"/>
 <connect gate="G$1" pin="VDD" pad="P$8"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="ACS711LC" prefix="U" uservalue="yes">
+<description>ACS711 Hall Effect Sensor
+
+http://www.digikey.com/product-detail/en/ACS711ELCTR-25AB-T/620-1371-1-ND/2470595</description>
+<gates>
+<gate name="G$1" symbol="ACS711" x="2.54" y="0"/>
+</gates>
+<devices>
+<device name="" package="ACS711">
+<connects>
+<connect gate="G$1" pin="FAULT" pad="P$6"/>
+<connect gate="G$1" pin="GND" pad="P$5"/>
+<connect gate="G$1" pin="IP+@1" pad="P$1"/>
+<connect gate="G$1" pin="IP+@2" pad="P$2"/>
+<connect gate="G$1" pin="IP-@1" pad="P$3"/>
+<connect gate="G$1" pin="IP-@2" pad="P$4"/>
+<connect gate="G$1" pin="VCC" pad="P$8"/>
+<connect gate="G$1" pin="VIOUT" pad="P$7"/>
 </connects>
 <technologies>
 <technology name=""/>
