@@ -145,6 +145,8 @@
 <wire x1="30.48" y1="10.16" x2="30.48" y2="-17.78" width="0.254" layer="94"/>
 <wire x1="30.48" y1="-17.78" x2="-22.86" y2="-17.78" width="0.254" layer="94"/>
 <wire x1="-22.86" y1="-17.78" x2="-22.86" y2="10.16" width="0.254" layer="94"/>
+<text x="-5.08" y="-7.62" size="2.54" layer="95" rot="R90">&gt;NAME</text>
+<text x="0" y="-7.62" size="2.54" layer="96" rot="R90">&gt;VALUE</text>
 </symbol>
 <symbol name="ADS1013">
 <pin name="ADDR" x="-20.32" y="5.08" length="middle"/>
@@ -4329,7 +4331,7 @@ Source: Fairchild .. BAT54.pdf</description>
 </classes>
 <parts>
 <part name="U1" library="iddproject" deviceset="ACS711LC" device="" value="Hall Effect"/>
-<part name="RELAY1" library="iddproject" deviceset="G5RL-1A-E-HR" device=""/>
+<part name="RELAY1" library="iddproject" deviceset="G5RL-1A-E-HR" device="" value="RELAY"/>
 <part name="J1" library="con-amp" deviceset="213598-2" device=""/>
 <part name="Q1" library="jackIdd" deviceset="BSH105" device=""/>
 <part name="R1" library="jackIdd" deviceset="R-US_" device="CT14J" value="1K"/>
@@ -4343,7 +4345,7 @@ Source: Fairchild .. BAT54.pdf</description>
 <part name="C1" library="jackIdd" deviceset="C" device="SR215E105"/>
 <part name="R3" library="jackIdd" deviceset="R-US_" device="CT14J"/>
 <part name="AGND1" library="supply1" deviceset="AGND" device=""/>
-<part name="U2" library="iddproject" deviceset="ADS1013IDGST" device=""/>
+<part name="U2" library="iddproject" deviceset="ADS1013IDGST" device="" value="ADC"/>
 <part name="+3V2" library="supply1" deviceset="+3V3" device=""/>
 <part name="GND4" library="supply1" deviceset="GND" device=""/>
 </parts>
