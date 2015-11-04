@@ -254,10 +254,10 @@
 <pin name="OUT@2" x="25.4" y="-20.32" length="middle" rot="R90"/>
 <pin name="IN@2" x="15.24" y="-20.32" length="middle" rot="R90"/>
 <pin name="ON@2" x="-15.24" y="-20.32" length="middle" rot="R90"/>
-<wire x1="-20.32" y1="17.78" x2="30.48" y2="17.78" width="0.254" layer="94"/>
-<wire x1="30.48" y1="17.78" x2="30.48" y2="-25.4" width="0.254" layer="94"/>
-<wire x1="30.48" y1="-25.4" x2="-20.32" y2="-25.4" width="0.254" layer="94"/>
-<wire x1="-20.32" y1="-25.4" x2="-20.32" y2="17.78" width="0.254" layer="94"/>
+<wire x1="-22.86" y1="10.16" x2="30.48" y2="10.16" width="0.254" layer="94"/>
+<wire x1="30.48" y1="10.16" x2="30.48" y2="-17.78" width="0.254" layer="94"/>
+<wire x1="30.48" y1="-17.78" x2="-22.86" y2="-17.78" width="0.254" layer="94"/>
+<wire x1="-22.86" y1="-17.78" x2="-22.86" y2="10.16" width="0.254" layer="94"/>
 </symbol>
 </symbols>
 <devicesets>
