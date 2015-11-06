@@ -6,6 +6,7 @@
 
 var Button = require('react-native-button');
 var React = require('react-native');
+var BLE =  require('./bleScan');
 var {
   AppRegistry,
   Image,
@@ -32,6 +33,7 @@ var PlugStripProject = React.createClass({
   },
   scanPress: function() {
     ToastAndroid.show("Pressed scan", ToastAndroid.SHORT);
+    BLE.scan();
   },
   runSmapQuery: function() {
     ToastAndroid.show("Starting Query", ToastAndroid.SHORT);
