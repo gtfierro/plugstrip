@@ -15,8 +15,10 @@ var {
   View,
   ListView,
   ToastAndroid,
+  BackAndroid,
   TouchableWithoutFeedback,
 } = React;
+
 
 var PlugStripProject = React.createClass({
   getInitialState: function() {
@@ -30,6 +32,16 @@ var PlugStripProject = React.createClass({
         }),
         message: '',
      }
+  },
+  componentWillMount: function() {
+    var self = this;
+    BackAndroid.addEventListener('hardwareBackPress', function() {
+        if (self.state._screen != 'menu') {
+            self.setState({_screen: 'menu'});
+            return true;
+        }
+        return false;
+    })
   },
   schedulePress: function() {
     ToastAndroid.show("Pressed schedule", ToastAndroid.SHORT);
@@ -50,9 +62,6 @@ var PlugStripProject = React.createClass({
             _screen: 'scan',
         });
     });
-  },
-  onBackPressed: function() {
-    console.log("BACK");
   },
   runSmapQuery: function() {
     ToastAndroid.show("Starting Query", ToastAndroid.SHORT);
