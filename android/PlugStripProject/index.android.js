@@ -25,6 +25,9 @@ var PlugStripProject = React.createClass({
         dataSource: new ListView.DataSource({
             rowHasChanged: (row1, row2) => row1 !== row2,
         }),
+        dataSourceBLE: new ListView.DataSource({
+            rowHasChanged: (row1, row2) => row1 !== row2,
+        }),
         message: '',
      }
   },
@@ -33,9 +36,23 @@ var PlugStripProject = React.createClass({
   },
   scanPress: function() {
     ToastAndroid.show("Pressed scan", ToastAndroid.SHORT);
+    var self =  this;
     BLE.scan(function(res) {
-        ToastAndroid.show("Called from javascript "+res, ToastAndroid.SHORT);
+        console.log("results", res);
+        ToastAndroid.show("returned from scan", ToastAndroid.SHORT);
+        var results = {};
+        for (var i=0;i<res.length;i++) {
+            var o = res[i];
+            results[o.string] = o;
+        }
+        self.setState({
+            dataSourceBLE: self.state.dataSourceBLE.cloneWithRows(results),
+            _screen: 'scan',
+        });
     });
+  },
+  onBackPressed: function() {
+    console.log("BACK");
   },
   runSmapQuery: function() {
     ToastAndroid.show("Starting Query", ToastAndroid.SHORT);
@@ -67,6 +84,12 @@ var PlugStripProject = React.createClass({
         <Text>{row}</Text>
     );
   },
+  renderBLERow: function(row) {
+        console.log("row", row);
+    return (
+        <Text>Device: {row.name} {row.rssi} {row.string}</Text>
+    );
+  },
   render: function() {
     var page = (<View />);
 
@@ -86,9 +109,21 @@ var PlugStripProject = React.createClass({
         />
     );
 
+    var scanPage = (
+        <ListView
+            dataSource={this.state.dataSourceBLE}
+            renderRow={this.renderBLERow}
+            style={styles.listView}
+        />
+    );
+
     switch (this.state._screen) {
     case 'query':
         page = queryPage;
+        break;
+    case 'scan':
+        console.log("scan page!");
+        page = scanPage;
         break;
     case 'menu':
     default:

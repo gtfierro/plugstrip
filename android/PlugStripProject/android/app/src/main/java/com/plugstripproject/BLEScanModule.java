@@ -73,8 +73,12 @@ public class BLEScanModule extends ReactContextBaseJavaModule {
                 public void onLeScan(final BluetoothDevice device, int rssi, byte[] scanRecord) {
                     WritableMap item = Arguments.createMap();
                     item.putString("name", device.getName());
-                    //WritableArray uuids = Arguments.fromJavaArgs(device.getUuids());
-                    //item.putArray("uuids", uuids);
+                    item.putInt("rssi",rssi);
+                    Object[] uuids = device.getUuids();
+                    if (uuids != null) {
+                        WritableArray uuidsArray = Arguments.fromJavaArgs(uuids);
+                        item.putArray("uuids", uuidsArray);
+                    }
                     item.putString("string", device.toString());
                     scanResults.pushMap(item);
                             // INVOKE CALLBACK ONCE
