@@ -33,7 +33,9 @@ var PlugStripProject = React.createClass({
   },
   scanPress: function() {
     ToastAndroid.show("Pressed scan", ToastAndroid.SHORT);
-    BLE.scan();
+    BLE.scan(function(res) {
+        ToastAndroid.show("Called from javascript "+res, ToastAndroid.SHORT);
+    });
   },
   runSmapQuery: function() {
     ToastAndroid.show("Starting Query", ToastAndroid.SHORT);
