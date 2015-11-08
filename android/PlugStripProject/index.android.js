@@ -17,6 +17,7 @@ var {
   ToastAndroid,
   BackAndroid,
   TouchableWithoutFeedback,
+  TouchableHighlight,
 } = React;
 
 
@@ -101,10 +102,10 @@ var PlugStripProject = React.createClass({
   },
   renderBLEHeader: function() {
     return (
-        <View style={this.styles.bleHeader}>
-          <Text>Name</Text>
-          <Text>RSSI</Text>
-          <Text>MAC</Text>
+        <View style={styles.bleHeader}>
+          <Text style={styles.bleHeaderText}>MAC</Text>
+          <Text style={styles.bleHeaderText}>RSSI</Text>
+          <Text style={styles.bleHeaderText}>Name</Text>
         </View>
     );
   },
@@ -192,9 +193,13 @@ var BLEDevice = React.createClass({
     },
     render: function() {
         return (
-          <View>
-              <Text onPress={this.connectDevice}>Device: {this.props.device.name} {this.props.device.rssi} {this.props.device.macaddr}</Text>
-          </View>
+          <TouchableHighlight onPress={this.connectDevice}>
+            <View style={styles.bleDevice}>
+              <Text>{this.props.device.macaddr}</Text>
+              <Text>{this.props.device.rssi}</Text>
+              <Text>{this.props.device.name}</Text>
+            </View>
+          </TouchableHighlight>
         )
     }
 });
@@ -219,6 +224,28 @@ var styles = StyleSheet.create({
   bleHeader: {
     flex: 1,
     flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    marginLeft: 20,
+    marginRight: 20,
+    paddingBottom: 20,
+  },
+  bleHeaderText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
+    textDecorationStyle: 'solid',
+  },
+  bleDevice: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingTop: 10,
+    paddingBottom: 10,
+    borderRadius: 4,
+    borderWidth: 0.5,    
+    borderColor: '#d6d7da',
   },
   welcome: {
     fontSize: 20,
