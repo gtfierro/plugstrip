@@ -99,6 +99,15 @@ var PlugStripProject = React.createClass({
         <BLEDevice device={row} />
     );
   },
+  renderBLEHeader: function() {
+    return (
+        <View style={this.styles.bleHeader}>
+          <Text>Name</Text>
+          <Text>RSSI</Text>
+          <Text>MAC</Text>
+        </View>
+    );
+  },
   render: function() {
     var page = (<View />);
 
@@ -122,6 +131,7 @@ var PlugStripProject = React.createClass({
         <ListView
             dataSource={this.state.dataSourceBLE}
             renderRow={this.renderBLERow}
+            renderSectionHeader={this.renderBLEHeader}
             style={styles.listView}
         />
     );
@@ -205,6 +215,10 @@ var styles = StyleSheet.create({
     borderColor: '#000',
     paddingTop: 10,
     paddingBottom: 10,
+  },
+  bleHeader: {
+    flex: 1,
+    flexDirection: 'row',
   },
   welcome: {
     fontSize: 20,
