@@ -96,7 +96,7 @@ var PlugStripProject = React.createClass({
   renderBLERow: function(row) {
         console.log("row", row);
     return (
-        <Text>Device: {row.name} {row.rssi} {row.string}</Text>
+        <BLEDevice device={row} />
     );
   },
   render: function() {
@@ -169,6 +169,22 @@ var MenuItem = React.createClass({
                     <Button onPress={this.props.onPress}>{this.props.label}</Button>
                 </View>
             </View>
+        )
+    }
+});
+
+var BLEDevice = React.createClass({
+    connectDevice: function(device) {
+      console.log("\n\nConnect: "+this.props.device.macaddr+"\n\n");
+      BLE.connect(this.props.device.macaddr, function(res) {
+          console.log("got a result?" + res);
+      });
+    },
+    render: function() {
+        return (
+          <View>
+              <Text onPress={this.connectDevice}>Device: {this.props.device.name} {this.props.device.rssi} {this.props.device.macaddr}</Text>
+          </View>
         )
     }
 });
