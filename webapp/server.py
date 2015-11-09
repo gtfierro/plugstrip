@@ -1,9 +1,16 @@
 #!/usr/bin/env python
 from flask import Flask
 from flask import render_template
+from flask import request
+import contextlib
+import datetime
 import requests
+import socket
+import threading
 
 GILES_QUERY_ADDR = "http://52.23.239.48:8079/api/query"
+PLUG_ADDR = '2001:470:83ae:2:212:6d02::f00f'
+PLUG_PORT = 5555
 app = Flask(__name__)
 
 def issueSmapRequest(query_string):
@@ -22,6 +29,19 @@ def getMaxTotal(plug_streams, uuid_to_names):
     totals = [ (uuid, sum(readings)) for (uuid, readings) in reading_values ]
     max_uuid, max_val = max(totals, key=lambda x: x[1])
     return (uuid_to_names[max_uuid], max_val)
+
+# IP and port hardcoded for now
+def actuatePlug(addr, port, turn_on):
+    with contextlib.closing(socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)) as sock:
+        if turn_on:
+            sock.sendto('1', (addr, port))
+        else:
+            sock.sendto('0', (addr, port))
+
+def actuateAndReschedule(addr, port, turn_on):
+    timer = threading.Timer(24 * 60 * 60, actuateAndReschedule, args=(addr, port, turn_on))
+    timer.start()
+    actuatePlug(addr, port, turn_on)
 
 @app.route('/')
 def homePage():
@@ -53,11 +73,12 @@ def homePage():
     }
     return render_template("home.html", **template_args)
 
-@app.route('/plugstrips/<uuid>')
+@app.route('/plugstrips/<uuid>', methods=['GET'])
 def plugPage(uuid):
+    # Hard coded to demo the UI for now
     schedule = [
-        {"time": "13:30", "action": "turn on"},
-        {"time": "17:45", "action": "turn off"}
+        {"time": "13:30", "action": "Turn On"},
+        {"time": "17:45", "action": "Turn Off"}
     ]
 
     plug_info = issueSmapRequest('select * where uuid="{}" and Path like "power$"'.format(uuid))
@@ -93,6 +114,39 @@ def plugPage(uuid):
         "schedule": schedule
     }
     return render_template("plugstrip.html", **template_args)
+
+@app.route('/plugstrips/<uuid>', methods=['POST'])
+def handleActuation(uuid):
+    # Hard code these for now
+    body = request.data
+    if  body == '0':
+        actuatePlug(PLUG_ADDR, PLUG_PORT, False)
+    else:
+        actuatePlug(PLUG_ADDR, PLUG_PORT, True)
+    return body
+
+@app.route('/plugstrips/<uuid>/schedule', methods=['POST'])
+def addActuationEvent(uuid):
+    event = request.json()
+    now = datetime.datetime.today()
+    requested_time = datetime.time(event["hour"], event["minute"])
+
+    requested_time_today = datetime.combine(datetime.date.today(), requested_time)
+    if now < requested_time_today:
+        # Scheduled time is later today
+        delay = (requested_time_today - now).total_seconds()
+    else:
+        # Schedule time won't occur again until tomorrow
+        requested_time_tomorrow = requested_time_today + datetime.timedelta(days=1)
+        delay = (requested_time_tomorrow - now).total_seconds()
+
+    if event["action"].lower() == "on":
+        args = (PLUG_ADDR, PLUG_PORT, True)
+    else:
+        args = (PLUG_ADDR, PLUG_PORT, False)
+    timer = threading.Timer(delay, actuateAndReschedule, args)
+    timer.start()
+    return 201
 
 if __name__ == '__main__':
     app.run(debug=True)

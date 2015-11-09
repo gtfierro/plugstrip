@@ -13,6 +13,7 @@
     <!-- Bootstrap: Latest compiled and minified JavaScript -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"
             integrity="sha512-K1qjQ+NcF2TYO/eI3M6v8EiNYZfA95pQumfvcVrTHtwQVDG+aHRqLi/ETn2uB+1JqwYqVG3LIvdm9lj6imS/pQ==" crossorigin="anonymous"></script>
+    <script src='/static/plugstrip.js' type='text/javascript' language='javascript'></script>
     <link href='/static/style.css' type='text/css' rel='stylesheet'>
     <meta charset='utf-8'>
     <title>{{ name }}: {{ location }}</title>
@@ -72,7 +73,7 @@
             <th>Action</th>
         </tr>
     </thead>
-    <tbody>
+    <tbody id='actuationEvents'>
         {% for event in schedule %}
         <tr class='clickable'>
             <td>{{ event["time"] }}</td>
@@ -81,6 +82,27 @@
         {% endfor %}
     </tbody>
     </table>
+    <button type='button' class='btn btn-info' id='bAddEvent'>Add Event to Schedule</button>
+    <br/>
+    <div class='row'>
+        <div class='col-xs-4' id='divHour'>
+            <label for='tHour'>Hour</label>
+            <input type='text' class='form-control' id='tHour'>
+        </div>
+        <div class='col-xs-4' id='divMinute'>
+            <label for='tMinute'>Minute</label>
+            <input type='text' class='form-control' id='tMinute'>
+        </div>
+        <div class='col-xs-4' id='divAction'>
+            <label for='sAction'>Action</label>
+            <select class='form-control' id='sAction'>
+                <option>Turn On</option>
+                <option>Turn Off</option>
+            </select>
+        </div>
+    </div>
+    <br/>
+    <button type='button' class='btn btn-success' id='bSaveEvent'>Save Event</button>
 </div>
 </body>
 </html>
