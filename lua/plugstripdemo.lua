@@ -5,7 +5,7 @@ sh = require "stormsh"
 storm.io.set_mode(storm.io.OUTPUT, storm.io.D8)
 
 state = 0 -- starts as off
-serverip = "2001:470:39:375::2" -- raspberry pi
+serverip = "2001:470:1f04:113::2" -- ec2 server
 serverport = 5555
 
 
