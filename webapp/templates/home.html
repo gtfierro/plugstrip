@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <!--Bootstrap:  Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"
+          integrity="sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ=="
+          crossorigin="anonymous">
+    <!-- Bootstrap: Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css"
+          integrity="sha384-aUGj/X2zp5rLCbBxumKTCw2Z50WgIr1vs/PFN4praOTvYXWlVyh2UtNUU0KAUhAX" crossorigin="anonymous">
+    <!-- Bootstrap: Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"
+            integrity="sha512-K1qjQ+NcF2TYO/eI3M6v8EiNYZfA95pQumfvcVrTHtwQVDG+aHRqLi/ETn2uB+1JqwYqVG3LIvdm9lj6imS/pQ=="
+            crossorigin="anonymous"></script>
+    <script src='/static/home.js' type='text/javascript' language='javascript'></script>
+    <link href='/static/style.css' type='text/css' rel='stylesheet'>
+    <meta charset='utf-8'>
+    <title>Smart Plugstrip -- IDD 2015</title>
+</head>
+
+<body>
+<div class='container-fluid'>
+    <h1>Smart Plugstrip -- IDD 2015</h2>
+    <h2>Available Plugstrips</h2>
+    <p>Click on a specific plug to learn more.</p>
+    <table class='table table-bordered table-hover'>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Location</th>
+            <th>Owner</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for plug in plugs %}
+        <tr id='{{ plug["uuid"] }}' class='clickable'>
+            <td>{{ plug["name"] }}</td>
+            <td>{{ plug["location"] }}</td>
+            <td>{{ plug["owner"] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+
+    <h2>Aggregate Statistics</h2>
+    <table class='table table-bordered'>
+    <tbody>
+        <tr>
+            <td><strong>Most Energy Consumed in Last Hour</strong></td>
+            <td>{{ max_hour_total }}</td>
+        </tr>
+        <tr>
+            <td><strong>Most Energy Consumed in Last Day<strong></td>
+            <td>{{ max_day_total }}</td>
+        </tr>
+        <tr>
+            <td><strong>Most Energy Consumed in Last Week</strong></td>
+            <td>{{ max_week_total }}</td>
+        </tr>
+        <tr>
+            <td><strong>Peak Energy Draw in Last Hour</strong></td>
+            <td>{{ max_hour_peak }}</td>
+        </tr>
+        <tr>
+            <td><strong>Peak Energy Draw in Last Day</strong></td>
+            <td>{{ max_day_peak }}</td>
+        </tr>
+        <tr>
+            <td><strong>Peak Energy Draw in Last Week</strong></td>
+            <td>{{ max_week_peak }}</td>
+        </tr>
+    </tbody>
+    </table>
+</div>
+</body>
+</html>

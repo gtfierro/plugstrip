@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <!--Bootstrap:  Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"
+          integrity="sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ=="
+          crossorigin="anonymous">
+    <!-- Bootstrap: Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css"
+          integrity="sha384-aUGj/X2zp5rLCbBxumKTCw2Z50WgIr1vs/PFN4praOTvYXWlVyh2UtNUU0KAUhAX" crossorigin="anonymous">
+    <!-- Bootstrap: Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"
+            integrity="sha512-K1qjQ+NcF2TYO/eI3M6v8EiNYZfA95pQumfvcVrTHtwQVDG+aHRqLi/ETn2uB+1JqwYqVG3LIvdm9lj6imS/pQ==" crossorigin="anonymous"></script>
+    <link href='/static/style.css' type='text/css' rel='stylesheet'>
+    <meta charset='utf-8'>
+    <title>{{ name }}: {{ location }}</title>
+</head>
+
+<body>
+<div class='container-fluid'>
+    <h1>{{ name }}: {{ location }}</h2>
+    <h3>Owned By: {{ owner }}</h3>
+    <div class='row'>
+        <div class='col-xs-4'>
+            <a class='btn btn-info' href='#' id='bViewPlot' role='button'>View Plot of Data</a>
+        </div>
+        <div class='col-xs-4'>
+            <button type='button' class='btn btn-success' id='bTurnOn'>Turn Plug On</button>
+        </div>
+        <div class='col-xs-4'>
+            <button type='button' class='btn btn-danger' id='bTurnOff'>Turn Plug Off</button>
+        </div>
+    </div>
+
+    <h2>Aggregate Statistics</h2>
+    <table class='table table-bordered'>
+    <tbody>
+        <tr>
+            <td><strong>Energy Consumed in Last Hour</strong></td>
+            <td>{{ hour_total }}</td>
+        </tr>
+        <tr>
+            <td><strong>Energy Consumed in Last Day<strong></td>
+            <td>{{ day_total }}</td>
+        </tr>
+        <tr>
+            <td><strong>Energy Consumed in Last Week</strong></td>
+            <td>{{ week_total }}</td>
+        </tr>
+        <tr>
+            <td><strong>Peak Energy Draw in Last Hour</strong></td>
+            <td>{{ hour_peak }}</td>
+        </tr>
+        <tr>
+            <td><strong>Peak Energy Draw in Last Day</strong></td>
+            <td>{{ day_peak }}</td>
+        </tr>
+        <tr>
+            <td><strong>Peak Energy Draw in Last Week</strong></td>
+            <td>{{ week_peak }}</td>
+        </tr>
+    </tbody>
+    </table>
+
+    <h2>Actuation Schedule</h2>
+    <table class='table table-bordered'>
+    <thead>
+        <tr>
+            <th>Time</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for event in schedule %}
+        <tr class='clickable'>
+            <td>{{ event["time"] }}</td>
+            <td>{{ event["action"] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+</div>
+</body>
+</html>
