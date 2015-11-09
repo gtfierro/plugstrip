@@ -220,9 +220,22 @@ var BLEDevice = React.createClass({
     },
     render: function() {
         return (
-            <View>
-                <Button style={{fontSize: 20, padding: 20}} onPress={this.setBLEState.bind(null, 0, this.props.plugdefault)}>Off</Button>
-                <Button style={{fontSize: 20, padding: 20}} onPress={this.setBLEState.bind(null, 1, this.props.plugdefault)}>On</Button>
+            <View style={styles.bledevice}>
+                <View style={styles.bleButtonContainer}>
+                    <View style={{padding: 20, width: 200}}>
+                        <Text style={{fontSize: 20, fontWeight:"bold", textDecorationLine:"underline"}}>Default:</Text>
+                    </View>
+                    <TouchableHighlight onPress={this.setBLEState.bind(null, 0, this.props.plugdefault)}>
+                        <View style={{padding: 20}}>
+                            <Text style={{fontSize: 20}}>Off</Text>
+                        </View>
+                    </TouchableHighlight>
+                    <TouchableHighlight onPress={this.setBLEState.bind(null, 1, this.props.plugdefault)}>
+                        <View style={{padding: 20}}>
+                            <Text style={{fontSize: 20}}>On</Text>
+                        </View>
+                    </TouchableHighlight>
+                </View>
             </View>
         );
     }
@@ -234,6 +247,18 @@ var styles = StyleSheet.create({
     backgroundColor: '#F5FCFF',
   },
   menuContainer: {
+  },
+  bleButtonContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    borderWidth: 3,
+    borderColor: '#111',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    marginLeft: 20,
+    marginRight: 20,
+  },
+  bledevice: {
   },
   menuItem: {
     flex: 1,
