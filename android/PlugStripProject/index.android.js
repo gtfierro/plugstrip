@@ -56,7 +56,7 @@ var PlugStripProject = React.createClass({
         var results = {};
         for (var i=0;i<res.length;i++) {
             var o = res[i];
-            results[o.string] = o;
+            results[o.macaddr] = o;
         }
         self.setState({
             dataSourceBLE: self.state.dataSourceBLE.cloneWithRows(results),
@@ -94,10 +94,21 @@ var PlugStripProject = React.createClass({
         <Text>{row}</Text>
     );
   },
+  connectDevice: function(device) {
+    console.log("\n\nConnect: "+device.macaddr+"\n\n");
+    var self = this;
+    BLE.connect(device.macaddr, function(res) {
+        console.log("got a result?" + res);
+        console.log("plug1", res.plug1);
+        console.log("plug2", res.plug2);
+        console.log("default", res.plugdefault);
+        self.setState({_screen: 'plugstrip'});
+    });
+  },
   renderBLERow: function(row) {
-        console.log("row", row);
+    console.log("row", row);
     return (
-        <BLEDevice device={row} />
+        <BLEDeviceRow device={row} connectDevice={this.connectDevice.bind(null, row)}/>
     );
   },
   renderBLEHeader: function() {
@@ -145,6 +156,9 @@ var PlugStripProject = React.createClass({
         console.log("scan page!");
         page = scanPage;
         break;
+    case 'plugstrip':
+        page = <BLEDevice />
+        break;
     case 'menu':
     default:
         page = menuPage;
@@ -184,23 +198,32 @@ var MenuItem = React.createClass({
     }
 });
 
-var BLEDevice = React.createClass({
-    connectDevice: function(device) {
-      console.log("\n\nConnect: "+this.props.device.macaddr+"\n\n");
-      BLE.connect(this.props.device.macaddr, function(res) {
-          console.log("got a result?" + res);
-      });
-    },
+var BLEDeviceRow = React.createClass({
     render: function() {
         return (
-          <TouchableHighlight onPress={this.connectDevice}>
-            <View style={styles.bleDevice}>
+          <TouchableHighlight onPress={this.props.connectDevice}>
+            <View style={styles.bleDeviceRow}>
               <Text>{this.props.device.macaddr}</Text>
               <Text>{this.props.device.rssi}</Text>
               <Text>{this.props.device.name}</Text>
             </View>
           </TouchableHighlight>
         )
+    }
+});
+
+var BLEDevice = React.createClass({
+    setBLEState: function(state, plugnum) {
+        var uuid = "0000b00d-0000-1000-8000-00805f9b34fb";
+        BLE.setState(uuid, state);
+    },
+    render: function() {
+        return (
+            <View>
+                <Button style={{fontSize: 20, padding: 20}} onPress={this.setBLEState.bind(null, "0", this.props.plugdefault)}>Off</Button>
+                <Button style={{fontSize: 20, padding: 20}} onPress={this.setBLEState.bind(null, "1", this.props.plugdefault)}>On</Button>
+            </View>
+        );
     }
 });
 
@@ -236,7 +259,7 @@ var styles = StyleSheet.create({
     textDecorationLine: 'underline',
     textDecorationStyle: 'solid',
   },
-  bleDevice: {
+  bleDeviceRow: {
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-around',

@@ -11,6 +11,8 @@ import android.widget.Toast;
 import android.bluetooth.*;
 
 import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
 
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 
@@ -39,12 +41,25 @@ public class BLEScanModule extends ReactContextBaseJavaModule {
     private Handler mHandler;
     private boolean mScanning;
     private final HashMap<String,BluetoothDevice>  myDevices = new HashMap();
+    private BluetoothGatt mGatt;
+    private BluetoothGattCharacteristic plug1;
+    private BluetoothGattCharacteristic plug2;
+    private BluetoothGattCharacteristic plug3;
+    private BluetoothGattCharacteristic plug4;
+    private BluetoothGattCharacteristic plugdefault;
 
     private int mConnectionState = STATE_DISCONNECTED;
 
     private static final int STATE_DISCONNECTED = 0;
     private static final int STATE_CONNECTING = 1;
     private static final int STATE_CONNECTED = 2;
+
+    public final static UUID PLUG_STRIP_SERVICE_UUID = UUID.fromString("0000b00c-0000-1000-8000-00805f9b34fb");
+    public final static UUID PLUG1 = UUID.fromString("0000b001-0000-1000-8000-00805f9b34fb");
+    public final static UUID PLUG2 = UUID.fromString("0000b002-0000-1000-8000-00805f9b34fb");
+    public final static UUID PLUG3 = UUID.fromString("0000b003-0000-1000-8000-00805f9b34fb");
+    public final static UUID PLUG4 = UUID.fromString("0000b004-0000-1000-8000-00805f9b34fb");
+    public final static UUID PLUGDEFAULT = UUID.fromString("0000b00d-0000-1000-8000-00805f9b34fb");
 
     public final static String ACTION_GATT_CONNECTED =
       "com.plugstripproject.bluetooth.le.ACTION_GATT_CONNECTED";
@@ -143,33 +158,54 @@ public class BLEScanModule extends ReactContextBaseJavaModule {
         }
     }
 
-    private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
-        @Override
-        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-            if (newState == BluetoothProfile.STATE_CONNECTED) {
-                mConnectionState = STATE_CONNECTED;
-                doMessage("connected!");
-                mBluetoothGatt.discoverServices();
-            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                doMessage("disconnected!");
-                mConnectionState = STATE_DISCONNECTED;
-            }
-        }
-
-        @Override
-        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
-            // add to list of services?
-            doMessage("found service"+gatt);
-        }
-
-        @Override
-        public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            // add to list of characteristics
-            doMessage("found characteristic"+gatt+characteristic);
-        }
-      };
 
     private void getGATTView(final String macaddr, final Callback callback) {
+
+
+        BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
+            @Override
+            public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+                if (newState == BluetoothProfile.STATE_CONNECTED) {
+                    mConnectionState = STATE_CONNECTED;
+                    doMessage("connected!");
+                    mBluetoothGatt.discoverServices();
+                } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                    doMessage("disconnected!");
+                    mConnectionState = STATE_DISCONNECTED;
+                }
+            }
+
+            @Override
+            public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+                mGatt = gatt;
+                doMessage("found service"+gatt+" looking for "+PLUG_STRIP_SERVICE_UUID);
+                BluetoothGattService plugstrip = gatt.getService(PLUG_STRIP_SERVICE_UUID);
+                doMessage("found plugstrip service"+plugstrip);
+                plug1 = plugstrip.getCharacteristic(PLUG1);
+                plug2 = plugstrip.getCharacteristic(PLUG2);
+                plug3 = plugstrip.getCharacteristic(PLUG3);
+                plug4 = plugstrip.getCharacteristic(PLUG4);
+                plugdefault = plugstrip.getCharacteristic(PLUGDEFAULT);
+
+                // report back what we found
+                WritableMap found = Arguments.createMap();
+                found.putString("plug1", (plug1 == null) ? "" : PLUG1.toString());
+                found.putString("plug2", (plug2 == null) ? "" : PLUG2.toString());
+                found.putString("plug3", (plug3 == null) ? "" : PLUG3.toString());
+                found.putString("plug4", (plug4 == null) ? "" : PLUG4.toString());
+                found.putString("plugdefault", (plugdefault == null) ? "" : PLUGDEFAULT.toString());
+                callback.invoke(found);
+            }
+
+            @Override
+            public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+                // add to list of characteristics
+                doMessage("found characteristic"+gatt+characteristic);
+            }
+          };
+
+
+
         BluetoothDevice dev = myDevices.get(macaddr);
         if (dev == null) {
             mActivity.runOnUiThread(new Runnable() {
@@ -218,6 +254,21 @@ public class BLEScanModule extends ReactContextBaseJavaModule {
                     }
                 });
                 getGATTView(macaddr, callback);
+            }
+        }.execute();
+    }
+
+    @ReactMethod
+    public void setState(final String state, final String characteristic) {
+        new GuardedAsyncTask<Void, Void>(getReactApplicationContext()) {
+            @Override
+            protected void doInBackgroundGuarded(Void ...params) {
+                if (state == "0") {
+                    plugdefault.setValue(new byte[]{(byte)0});
+                } else {
+                    plugdefault.setValue(new byte[]{(byte)1});
+                }
+                mBluetoothGatt.writeCharacteristic(plugdefault);
             }
         }.execute();
     }
