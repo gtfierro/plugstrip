@@ -17,6 +17,7 @@ var {
   ToastAndroid,
   BackAndroid,
   TouchableWithoutFeedback,
+  TouchableHighlight,
 } = React;
 
 
@@ -96,7 +97,16 @@ var PlugStripProject = React.createClass({
   renderBLERow: function(row) {
         console.log("row", row);
     return (
-        <Text>Device: {row.name} {row.rssi} {row.string}</Text>
+        <BLEDevice device={row} />
+    );
+  },
+  renderBLEHeader: function() {
+    return (
+        <View style={styles.bleHeader}>
+          <Text style={styles.bleHeaderText}>MAC</Text>
+          <Text style={styles.bleHeaderText}>RSSI</Text>
+          <Text style={styles.bleHeaderText}>Name</Text>
+        </View>
     );
   },
   render: function() {
@@ -122,6 +132,7 @@ var PlugStripProject = React.createClass({
         <ListView
             dataSource={this.state.dataSourceBLE}
             renderRow={this.renderBLERow}
+            renderSectionHeader={this.renderBLEHeader}
             style={styles.listView}
         />
     );
@@ -173,6 +184,26 @@ var MenuItem = React.createClass({
     }
 });
 
+var BLEDevice = React.createClass({
+    connectDevice: function(device) {
+      console.log("\n\nConnect: "+this.props.device.macaddr+"\n\n");
+      BLE.connect(this.props.device.macaddr, function(res) {
+          console.log("got a result?" + res);
+      });
+    },
+    render: function() {
+        return (
+          <TouchableHighlight onPress={this.connectDevice}>
+            <View style={styles.bleDevice}>
+              <Text>{this.props.device.macaddr}</Text>
+              <Text>{this.props.device.rssi}</Text>
+              <Text>{this.props.device.name}</Text>
+            </View>
+          </TouchableHighlight>
+        )
+    }
+});
+
 var styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -189,6 +220,32 @@ var styles = StyleSheet.create({
     borderColor: '#000',
     paddingTop: 10,
     paddingBottom: 10,
+  },
+  bleHeader: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    marginLeft: 20,
+    marginRight: 20,
+    paddingBottom: 20,
+  },
+  bleHeaderText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
+    textDecorationStyle: 'solid',
+  },
+  bleDevice: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingTop: 10,
+    paddingBottom: 10,
+    borderRadius: 4,
+    borderWidth: 0.5,    
+    borderColor: '#d6d7da',
   },
   welcome: {
     fontSize: 20,
