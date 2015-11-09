@@ -37,6 +37,7 @@ var PlugStripProject = React.createClass({
   componentWillMount: function() {
     var self = this;
     BackAndroid.addEventListener('hardwareBackPress', function() {
+        BLE.disconnect();
         if (self.state._screen != 'menu') {
             self.setState({_screen: 'menu'});
             return true;
@@ -215,13 +216,13 @@ var BLEDeviceRow = React.createClass({
 var BLEDevice = React.createClass({
     setBLEState: function(state, plugnum) {
         var uuid = "0000b00d-0000-1000-8000-00805f9b34fb";
-        BLE.setState(uuid, state);
+        BLE.setState(state, uuid);
     },
     render: function() {
         return (
             <View>
-                <Button style={{fontSize: 20, padding: 20}} onPress={this.setBLEState.bind(null, "0", this.props.plugdefault)}>Off</Button>
-                <Button style={{fontSize: 20, padding: 20}} onPress={this.setBLEState.bind(null, "1", this.props.plugdefault)}>On</Button>
+                <Button style={{fontSize: 20, padding: 20}} onPress={this.setBLEState.bind(null, 0, this.props.plugdefault)}>Off</Button>
+                <Button style={{fontSize: 20, padding: 20}} onPress={this.setBLEState.bind(null, 1, this.props.plugdefault)}>On</Button>
             </View>
         );
     }

@@ -82,12 +82,7 @@ public class BLEScanModule extends ReactContextBaseJavaModule {
         final BluetoothManager bluetoothManager = (BluetoothManager) mActivity.getSystemService(Context.BLUETOOTH_SERVICE);
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null) { // device doesn't support bluetooth
-            mActivity.runOnUiThread(new Runnable() {
-                public void run() {
-                    CharSequence text = "Device does not support BLE";
-                    Toast.makeText(getReactApplicationContext(), text, Toast.LENGTH_SHORT).show();
-                }
-            });
+            doMessage("Device does not support BLE!");
         }
 
         // check if bluetooth is enabled
@@ -125,7 +120,9 @@ public class BLEScanModule extends ReactContextBaseJavaModule {
                         item.putArray("uuids", uuidsArray);
                     }
                     item.putString("macaddr", device.toString());
-                    scanResults.pushMap(item);
+                    if (mScanning) {
+                        scanResults.pushMap(item);
+                    }
 
                     // add device to our internal map too
                     myDevices.put(device.toString(), device);
@@ -133,12 +130,6 @@ public class BLEScanModule extends ReactContextBaseJavaModule {
             };
 
         if (enable) {
-            mActivity.runOnUiThread(new Runnable() {
-                public void run() {
-                    CharSequence text = "actually Started scanning";
-                    Toast.makeText(getReactApplicationContext(), text, Toast.LENGTH_SHORT).show();
-                }
-            });
             // stops scanning after SCAN_PERIOD seconds
             mHandler.postDelayed(new Runnable() {
                 @Override
@@ -178,9 +169,9 @@ public class BLEScanModule extends ReactContextBaseJavaModule {
             @Override
             public void onServicesDiscovered(BluetoothGatt gatt, int status) {
                 mGatt = gatt;
-                doMessage("found service"+gatt+" looking for "+PLUG_STRIP_SERVICE_UUID);
+                //doMessage("found service"+gatt+" looking for "+PLUG_STRIP_SERVICE_UUID);
                 BluetoothGattService plugstrip = gatt.getService(PLUG_STRIP_SERVICE_UUID);
-                doMessage("found plugstrip service"+plugstrip);
+                //doMessage("found plugstrip service"+plugstrip);
                 plug1 = plugstrip.getCharacteristic(PLUG1);
                 plug2 = plugstrip.getCharacteristic(PLUG2);
                 plug3 = plugstrip.getCharacteristic(PLUG3);
@@ -197,23 +188,18 @@ public class BLEScanModule extends ReactContextBaseJavaModule {
                 callback.invoke(found);
             }
 
-            @Override
-            public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-                // add to list of characteristics
-                doMessage("found characteristic"+gatt+characteristic);
-            }
+            //@Override
+            //public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            //    // add to list of characteristics
+            //    doMessage("found characteristic"+gatt+characteristic);
+            //}
           };
 
 
 
         BluetoothDevice dev = myDevices.get(macaddr);
         if (dev == null) {
-            mActivity.runOnUiThread(new Runnable() {
-                public void run() {
-                    CharSequence text = "device was null for macaddr "+macaddr;
-                    Toast.makeText(getReactApplicationContext(), text, Toast.LENGTH_SHORT).show();
-                }
-            });
+            doMessage("device was null for macaddr "+macaddr);
             return;
         }
 
@@ -230,13 +216,7 @@ public class BLEScanModule extends ReactContextBaseJavaModule {
         new GuardedAsyncTask<Void, Void>(getReactApplicationContext()) {
             @Override
             protected void doInBackgroundGuarded(Void ...params) {
-                mActivity.runOnUiThread(new Runnable() {
-                    public void run() {
-                        CharSequence text = "scan task started";
-                        Toast.makeText(getReactApplicationContext(), text, Toast.LENGTH_SHORT).show();
-                    }
-                });
-
+                doMessage("starting scan");
                 scanLeDevice(true, callback);
             }
         }.execute();
@@ -247,28 +227,33 @@ public class BLEScanModule extends ReactContextBaseJavaModule {
         new GuardedAsyncTask<Void, Void>(getReactApplicationContext()) {
             @Override
             protected void doInBackgroundGuarded(Void ...params) {
-                mActivity.runOnUiThread(new Runnable() {
-                    public void run() {
-                        CharSequence text = "connect to "+macaddr;
-                        Toast.makeText(getReactApplicationContext(), text, Toast.LENGTH_SHORT).show();
-                    }
-                });
+                doMessage("connect to "+macaddr);
                 getGATTView(macaddr, callback);
             }
         }.execute();
     }
 
     @ReactMethod
-    public void setState(final String state, final String characteristic) {
+    public void setState(final int state, final String characteristic) {
         new GuardedAsyncTask<Void, Void>(getReactApplicationContext()) {
             @Override
             protected void doInBackgroundGuarded(Void ...params) {
-                if (state == "0") {
-                    plugdefault.setValue(new byte[]{(byte)0});
+                if (state == 1) {
+                    plugdefault.setValue(new byte[]{1});
                 } else {
-                    plugdefault.setValue(new byte[]{(byte)1});
+                    plugdefault.setValue(new byte[]{0});
                 }
                 mBluetoothGatt.writeCharacteristic(plugdefault);
+            }
+        }.execute();
+    }
+
+    @ReactMethod
+    public void disconnect() {
+        new GuardedAsyncTask<Void, Void>(getReactApplicationContext()) {
+            @Override
+            protected void doInBackgroundGuarded(Void ...params) {
+                mBluetoothGatt.close();
             }
         }.execute();
     }
