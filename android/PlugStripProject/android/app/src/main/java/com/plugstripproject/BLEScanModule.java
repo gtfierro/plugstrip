@@ -253,7 +253,9 @@ public class BLEScanModule extends ReactContextBaseJavaModule {
         new GuardedAsyncTask<Void, Void>(getReactApplicationContext()) {
             @Override
             protected void doInBackgroundGuarded(Void ...params) {
-                mBluetoothGatt.close();
+                if (mBluetoothGatt != null) {
+                    mBluetoothGatt.close();
+                }
             }
         }.execute();
     }
