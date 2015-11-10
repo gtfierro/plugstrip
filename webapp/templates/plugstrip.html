@@ -25,7 +25,7 @@
     <h3>Owned By: {{ owner }}</h3>
     <div class='row'>
         <div class='col-xs-4'>
-            <a class='btn btn-info' href='#' id='bViewPlot' role='button'>View Plot of Data</a>
+            <a class='btn btn-info' href='{{ plot_url }}' id='bViewPlot' role='button'>View Plot of Data</a>
         </div>
         <div class='col-xs-4'>
             <button type='button' class='btn btn-success' id='bTurnOn'>Turn Plug On</button>
@@ -40,27 +40,27 @@
     <tbody>
         <tr>
             <td><strong>Energy Consumed in Last Hour</strong></td>
-            <td>{{ hour_total }}</td>
+            <td>{{ hour_total }} W</td>
         </tr>
         <tr>
             <td><strong>Energy Consumed in Last Day<strong></td>
-            <td>{{ day_total }}</td>
+            <td>{{ day_total }} W</td>
         </tr>
         <tr>
             <td><strong>Energy Consumed in Last Week</strong></td>
-            <td>{{ week_total }}</td>
+            <td>{{ week_total }} W</td>
         </tr>
         <tr>
             <td><strong>Peak Energy Draw in Last Hour</strong></td>
-            <td>{{ hour_peak }}</td>
+            <td>{{ hour_peak }} W</td>
         </tr>
         <tr>
             <td><strong>Peak Energy Draw in Last Day</strong></td>
-            <td>{{ day_peak }}</td>
+            <td>{{ day_peak }} W</td>
         </tr>
         <tr>
             <td><strong>Peak Energy Draw in Last Week</strong></td>
-            <td>{{ week_peak }}</td>
+            <td>{{ week_peak }} W</td>
         </tr>
     </tbody>
     </table>

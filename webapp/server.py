@@ -4,13 +4,13 @@ from flask import render_template
 from flask import request
 import contextlib
 import datetime
+import json
 import requests
 import socket
 import threading
 
-GILES_QUERY_ADDR = "http://52.23.239.48:8079/api/query"
-PLUG_ADDR = '2001:470:83ae:2:212:6d02::f00f'
-PLUG_PORT = 5555
+GILES_QUERY_ADDR = "http://54.84.37.77:8079/api/query"
+PLOTTER_ADDR = "http://54.84.37.77:3000"
 app = Flask(__name__)
 
 def issueSmapRequest(query_string):
@@ -42,6 +42,21 @@ def actuateAndReschedule(addr, port, turn_on):
     timer = threading.Timer(24 * 60 * 60, actuateAndReschedule, args=(addr, port, turn_on))
     timer.start()
     actuatePlug(addr, port, turn_on)
+
+def generatePermalink(uuid):
+    request_params = {
+        "autoupdate": True,
+        "axes": [{ "axisname": "Power Consumption (W)", "streams": [uuid], "scale": [0,5], "rightside": False }],
+        "streams": [{ "stream": uuid, "color": "#0000FF" }],
+        "window_type": "now",
+        "window_width": 60 * 60 * 10e9, # One Hour in Nanoseconds
+        "tz": "America/Los_Angeles"
+    }
+
+    r = requests.post(PLOTTER_ADDR + "/s3ui_permalink", data={"permalink_data": json.dumps(request_params)})
+    print r.text
+    r.raise_for_status()
+    return r.text
 
 @app.route('/')
 def homePage():
@@ -101,6 +116,8 @@ def plugPage(uuid):
     week_total = sum(week_reading_values)
     week_peak = max(week_reading_values)
 
+    permalink_code = generatePermalink(uuid)
+
     template_args = {
         "name": name,
         "location": location,
@@ -111,22 +128,28 @@ def plugPage(uuid):
         "hour_peak": hour_peak,
         "day_peak": day_peak,
         "week_peak": week_peak,
+        "plot_url": "{}/?{}".format(PLOTTER_ADDR, permalink_code),
         "schedule": schedule
     }
     return render_template("plugstrip.html", **template_args)
 
 @app.route('/plugstrips/<uuid>', methods=['POST'])
 def handleActuation(uuid):
-    # Hard code these for now
+    plug_info = issueSmapRequest('select Metadata/Address, Metadata/Port where uuid="{}"'.format(uuid))
+    addr = plug_info[0]["Metadata"]["Address"]
+    port = int(plug_info[0]["Metadata"]["Port"])
     body = request.data
     if  body == '0':
-        actuatePlug(PLUG_ADDR, PLUG_PORT, False)
-    else:
-        actuatePlug(PLUG_ADDR, PLUG_PORT, True)
-    return body
+        actuatePlug(addr, port, False)
+    elif body == '1':
+        actuatePlug(addr, port, True)
+    return "Actuation Completed", 201
 
 @app.route('/plugstrips/<uuid>/schedule', methods=['POST'])
 def addActuationEvent(uuid):
+    plug_info = issueSmapRequest('select Metadata/Address, Metadata/Port where uuid="{}"'.format(uuid))
+    addr = plug_info[0]["Metadata"]["Address"]
+    port = int(plug_info[0]["Metadata"]["Port"])
     event = request.json()
     now = datetime.datetime.today()
     requested_time = datetime.time(event["hour"], event["minute"])
@@ -141,12 +164,12 @@ def addActuationEvent(uuid):
         delay = (requested_time_tomorrow - now).total_seconds()
 
     if event["action"].lower() == "on":
-        args = (PLUG_ADDR, PLUG_PORT, True)
+        args = (addr, port, True)
     else:
-        args = (PLUG_ADDR, PLUG_PORT, False)
+        args = (addr, port, False)
     timer = threading.Timer(delay, actuateAndReschedule, args)
     timer.start()
-    return 201
+    return "Event Added", 201
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', debug=True)
