@@ -180,11 +180,21 @@ public class BLEScanModule extends ReactContextBaseJavaModule {
 
                 // report back what we found
                 WritableMap found = Arguments.createMap();
-                found.putString("plug1", (plug1 == null) ? "" : PLUG1.toString());
-                found.putString("plug2", (plug2 == null) ? "" : PLUG2.toString());
-                found.putString("plug3", (plug3 == null) ? "" : PLUG3.toString());
-                found.putString("plug4", (plug4 == null) ? "" : PLUG4.toString());
-                found.putString("plugdefault", (plugdefault == null) ? "" : PLUGDEFAULT.toString());
+
+                WritableMap plug1state = Arguments.createMap();
+                plug1state.putString("uuid", (plug1 == null) ? "" : PLUG1.toString());
+                plug1state.putInt("state", (plug1 == null) ? 0 : plug1.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0));
+                found.putMap("plug1", plug1state);
+
+                WritableMap plug2state = Arguments.createMap();
+                plug2state.putString("uuid", (plug2 == null) ? "" : PLUG2.toString());
+                plug2state.putInt("state", (plug2 == null) ? 0 : plug2.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0));
+                found.putMap("plug2", plug2state);
+
+                WritableMap plugdefaultstate = Arguments.createMap();
+                plugdefaultstate.putString("uuid", (plugdefault == null) ? "" : PLUGDEFAULT.toString());
+                plugdefaultstate.putInt("state", (plugdefault == null) ? 0 : 1);//plugdefault.getValue()[0]);
+                found.putMap("plugdefault", plugdefaultstate);
                 callback.invoke(found);
             }
 

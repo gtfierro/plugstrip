@@ -32,6 +32,7 @@ var PlugStripProject = React.createClass({
             rowHasChanged: (row1, row2) => row1 !== row2,
         }),
         message: '',
+        macaddr: null,
      }
   },
   componentWillMount: function() {
@@ -97,14 +98,8 @@ var PlugStripProject = React.createClass({
   },
   connectDevice: function(device) {
     console.log("\n\nConnect: "+device.macaddr+"\n\n");
-    var self = this;
-    BLE.connect(device.macaddr, function(res) {
-        console.log("got a result?" + res);
-        console.log("plug1", res.plug1);
-        console.log("plug2", res.plug2);
-        console.log("default", res.plugdefault);
-        self.setState({_screen: 'plugstrip'});
-    });
+    this.setState({_screen: 'plugstrip',
+                   macaddr: device.macaddr});
   },
   renderBLERow: function(row) {
     console.log("row", row);
@@ -158,7 +153,7 @@ var PlugStripProject = React.createClass({
         page = scanPage;
         break;
     case 'plugstrip':
-        page = <BLEDevice />
+        page = <BLEDevice macaddr={this.state.macaddr}/>
         break;
     case 'menu':
     default:
@@ -214,28 +209,64 @@ var BLEDeviceRow = React.createClass({
 });
 
 var BLEDevice = React.createClass({
+    getInitialState: function() {
+        return {
+            plugs: {}
+        }
+    },
+    componentWillMount: function() {
+        var self = this;
+        BLE.connect(self.props.macaddr, function(res) {
+            console.log(res.plug1.uuid)
+            console.log(res.plug1.state)
+            console.log("plugs", res);
+            self.setState({plugs: res});
+        });
+    },
     setBLEState: function(state, plugnum) {
         var uuid = "0000b00d-0000-1000-8000-00805f9b34fb";
         BLE.setState(state, uuid);
     },
     render: function() {
+        var rows = [];
+        for (var key in this.state.plugs) {
+            console.log("key", key);
+            rows.push(<BLEPlug name={key} plug={this.state.plugs[key].uuid} plugstate={this.state.plugs[key].state} />);
+        }
+        console.log("rows", rows);
         return (
             <View style={styles.bledevice}>
-                <View style={styles.bleButtonContainer}>
-                    <View style={{padding: 20, width: 200}}>
-                        <Text style={{fontSize: 20, fontWeight:"bold", textDecorationLine:"underline"}}>Default:</Text>
-                    </View>
-                    <TouchableHighlight onPress={this.setBLEState.bind(null, 0, this.props.plugdefault)}>
-                        <View style={{padding: 20}}>
-                            <Text style={{fontSize: 20}}>Off</Text>
-                        </View>
-                    </TouchableHighlight>
-                    <TouchableHighlight onPress={this.setBLEState.bind(null, 1, this.props.plugdefault)}>
-                        <View style={{padding: 20}}>
-                            <Text style={{fontSize: 20}}>On</Text>
-                        </View>
-                    </TouchableHighlight>
+                {rows}
+            </View>
+        );
+    }
+});
+
+var BLEPlug = React.createClass({
+    getInitialState: function() {
+        return {plugstate: this.props.plugstate}
+    },
+    setBLEState: function(state, plugnum) {
+        BLE.setState(state, plugnum);
+        this.setState({plugstate: state});
+    },
+    render: function() {
+        var ison = this.state.plugstate == 1;
+        return (
+            <View style={styles.bleButtonContainer}>
+                <View style={{padding: 20, width: 200}}>
+                    <Text style={{fontSize: 20, fontWeight:"bold", textDecorationLine:"underline"}}>Plug {this.props.name}:</Text>
                 </View>
+                <TouchableHighlight onPress={this.setBLEState.bind(null, 0, this.props.plug)}>
+                    <View style={{padding: 20}}>
+                        <Text style={{fontSize: 20, color: ison ? 'black': 'red'}}>Off</Text>
+                    </View>
+                </TouchableHighlight>
+                <TouchableHighlight onPress={this.setBLEState.bind(null, 1, this.props.plug)}>
+                    <View style={{padding: 20}}>
+                        <Text style={{fontSize: 20, color: ison ? 'red': 'black'}}>On</Text>
+                    </View>
+                </TouchableHighlight>
             </View>
         );
     }
