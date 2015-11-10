@@ -10,11 +10,11 @@ $(document).ready(function() {
     });
 
     $('#bTurnOn').click(function() {
-        // Not implemented yet
+        $.ajax({data: "1", contentType: "text/plain", type: "POST"})
     });
 
     $('#bTurnOff').click(function() {
-        // Not implemented yet
+        $.ajax({data: "0", contentType: "text/plain", type: "POST"})
     });
 
     $('#bAddEvent').click(function() {
