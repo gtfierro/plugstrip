@@ -7579,6 +7579,64 @@ Source: AVX .. aphvc.pdf</description>
 </deviceset>
 </devicesets>
 </library>
+<library name="fuse">
+<description>&lt;b&gt;Fuses and Fuse Holders&lt;/b&gt;&lt;p&gt;
+&lt;author&gt;Created by librarian@cadsoft.de&lt;/author&gt;</description>
+<packages>
+<package name="19560">
+<description>&lt;b&gt;FUSE HOLDER&lt;/b&gt;&lt;p&gt;
+TR5 Fuse Holder Wickmann</description>
+<wire x1="2.54" y1="-3.937" x2="3.937" y2="-2.54" width="0.1524" layer="21" curve="177.916747"/>
+<circle x="0" y="0" radius="4.699" width="0.1524" layer="21"/>
+<circle x="2.54" y="0" radius="0.762" width="0.1524" layer="51"/>
+<circle x="2.54" y="0" radius="0.254" width="0.254" layer="51"/>
+<circle x="-2.54" y="0" radius="0.254" width="0.254" layer="51"/>
+<circle x="-2.54" y="0" radius="0.762" width="0.1524" layer="51"/>
+<pad name="1" x="-2.54" y="0" drill="0.8128" diameter="1.778" shape="long" rot="R90"/>
+<pad name="2" x="2.54" y="0" drill="0.8128" diameter="1.778" shape="long" rot="R90"/>
+<text x="-2.54" y="5.08" size="1.27" layer="25" ratio="10">&gt;NAME</text>
+<text x="-3.048" y="-2.54" size="1.27" layer="27" ratio="10">&gt;VALUE</text>
+</package>
+</packages>
+<symbols>
+<symbol name="FUSE">
+<wire x1="-3.81" y1="-0.762" x2="3.81" y2="-0.762" width="0.254" layer="94"/>
+<wire x1="3.81" y1="0.762" x2="-3.81" y2="0.762" width="0.254" layer="94"/>
+<wire x1="3.81" y1="-0.762" x2="3.81" y2="0.762" width="0.254" layer="94"/>
+<wire x1="-3.81" y1="0.762" x2="-3.81" y2="-0.762" width="0.254" layer="94"/>
+<wire x1="-2.54" y1="0" x2="2.54" y2="0" width="0.1524" layer="94"/>
+<text x="-3.81" y="1.397" size="1.778" layer="95">&gt;NAME</text>
+<text x="-3.81" y="-2.921" size="1.778" layer="96">&gt;VALUE</text>
+<pin name="2" x="5.08" y="0" visible="off" length="short" direction="pas" swaplevel="1" rot="R180"/>
+<pin name="1" x="-5.08" y="0" visible="off" length="short" direction="pas" swaplevel="1"/>
+</symbol>
+</symbols>
+<devicesets>
+<deviceset name="19560" prefix="F" uservalue="yes">
+<description>&lt;b&gt;FUSE HOLDER&lt;/b&gt;&lt;p&gt;
+TR5, Wickmann</description>
+<gates>
+<gate name="F" symbol="FUSE" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="19560">
+<connects>
+<connect gate="F" pin="1" pad="1"/>
+<connect gate="F" pin="2" pad="2"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="MF" value="" constant="no"/>
+<attribute name="MPN" value="56000001009" constant="no"/>
+<attribute name="OC_FARNELL" value="1185363" constant="no"/>
+<attribute name="OC_NEWARK" value="15P8392" constant="no"/>
+</technology>
+</technologies>
+</device>
+</devices>
+</deviceset>
+</devicesets>
+</library>
 </libraries>
 <attributes>
 </attributes>
@@ -7631,6 +7689,7 @@ Source: AVX .. aphvc.pdf</description>
 <part name="C8" library="jackIdd" deviceset="C" device="SR215E105" value="1uF"/>
 <part name="R6" library="jackIdd" deviceset="R-US_" device="CT14J" value="200K"/>
 <part name="GND5" library="supply1" deviceset="GND" device=""/>
+<part name="F1" library="fuse" deviceset="19560" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -7675,6 +7734,7 @@ Source: AVX .. aphvc.pdf</description>
 <instance part="C8" gate="G$1" x="38.1" y="-12.7"/>
 <instance part="R6" gate="G$1" x="48.26" y="-15.24" rot="R90"/>
 <instance part="GND5" gate="1" x="38.1" y="-25.4"/>
+<instance part="F1" gate="F" x="25.4" y="-45.72" rot="R90"/>
 </instances>
 <busses>
 </busses>
@@ -7973,11 +8033,10 @@ Source: AVX .. aphvc.pdf</description>
 <wire x1="-27.94" y1="-27.94" x2="-5.08" y2="-27.94" width="0.1524" layer="91"/>
 <pinref part="R4" gate="G$1" pin="1"/>
 <wire x1="-5.08" y1="-25.4" x2="-5.08" y2="-27.94" width="0.1524" layer="91"/>
-<pinref part="AC_LIVE" gate="1" pin="P"/>
-<wire x1="40.64" y1="-63.5" x2="25.4" y2="-63.5" width="0.1524" layer="91"/>
-<wire x1="25.4" y1="-63.5" x2="25.4" y2="-27.94" width="0.1524" layer="91"/>
 <wire x1="25.4" y1="-27.94" x2="-5.08" y2="-27.94" width="0.1524" layer="91"/>
 <junction x="-5.08" y="-27.94"/>
+<pinref part="F1" gate="F" pin="2"/>
+<wire x1="25.4" y1="-27.94" x2="25.4" y2="-40.64" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="AC_NEUTRAL" class="1">
@@ -8086,6 +8145,14 @@ Source: AVX .. aphvc.pdf</description>
 <wire x1="38.1" y1="-10.16" x2="48.26" y2="-10.16" width="0.1524" layer="91"/>
 <junction x="38.1" y="-10.16"/>
 <junction x="48.26" y="-10.16"/>
+</segment>
+</net>
+<net name="N$14" class="1">
+<segment>
+<pinref part="AC_LIVE" gate="1" pin="P"/>
+<wire x1="40.64" y1="-63.5" x2="25.4" y2="-63.5" width="0.1524" layer="91"/>
+<pinref part="F1" gate="F" pin="1"/>
+<wire x1="25.4" y1="-50.8" x2="25.4" y2="-63.5" width="0.1524" layer="91"/>
 </segment>
 </net>
 </nets>
