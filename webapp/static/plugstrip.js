@@ -4,11 +4,6 @@ $(document).ready(function() {
     $('#divAction').hide()
     $('#bSaveEvent').hide()
 
-    $('#bViewPlot').click(function() {
-        // This is hard-coded for now
-        location.href = "http://52.23.239.48:3000/?o96JsTm433cfS4GJn"
-    });
-
     $('#bTurnOn').click(function() {
         $.ajax({data: "1", contentType: "text/plain", type: "POST"})
     });
@@ -32,9 +27,27 @@ $(document).ready(function() {
         $('#divAction').hide()
         $('#bSaveEvent').hide()
 
-        // Quick hack to demo UI
-        var htmlString = "<tr><td>" + $('#tHour').val() + ":" + $('#tMinute').val() +
-                "</td><td>" + $('#sAction').val() + "</td></tr>"
-        $('#actuationEvents').append(htmlString)
+        var hour = $('#tHour').val()
+        var minute = $('#tMinute').val()
+        var turnOnStr = $('#sAction').val()
+        var requestData = {
+            "hour": hour,
+            "minute": minute,
+            "turnOn":  (turnOnStr === "Turn On")
+        }
+        var onSuccess = function(serverData, textStatus, request) {
+            var htmlString = "<tr><td>" + hour + ":" + minute +
+                    "</td><td>" + turnOnStr + "</td></tr>"
+            $('#actuationEvents').append(htmlString)
+        }
+
+        var uuid = $('#uuid').val()
+        $.ajax({url: uuid + "/schedule", data: JSON.stringify(requestData),
+                contentType: "application/json", type: "POST", success: onSuccess})
+        $('#bAddEvent').show()
+        $('#divHour').hide()
+        $('#divMinute').hide()
+        $('#divAction').hide()
+        $('#bSaveEvent').hide()
     });
 });

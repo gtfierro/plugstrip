@@ -20,6 +20,7 @@
 </head>
 
 <body>
+<input type="hidden" id="uuid" value="{{ uuid }}">
 <div class='container-fluid'>
     <h1>{{ name }}: {{ location }}</h2>
     <h3>Owned By: {{ owner }}</h3>
@@ -76,8 +77,12 @@
     <tbody id='actuationEvents'>
         {% for event in schedule %}
         <tr class='clickable'>
-            <td>{{ event["time"] }}</td>
-            <td>{{ event["action"] }}</td>
+            <td>{{ event["hour"] }}:{{ event["minute"] }}</td>
+            {% if event["turn_on"] %}
+            <td>Turn On</td>
+            {% else %}
+            <td>Turn Off</td>
+            {% endif %}
         </tr>
         {% endfor %}
     </tbody>
