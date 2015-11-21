@@ -15,7 +15,8 @@ import threading
 GILES_QUERY_ADDR = "http://54.84.37.77:8079/api/query"
 PLOTTER_ADDR = "http://54.84.37.77:3000"
 app = Flask(__name__)
-actuation_tasks = {}
+actuation_tasks = set([])
+running_timers = {}
 actuation_tasks_lock = threading.Lock()
 
 def issueSmapRequest(query_string):
@@ -64,7 +65,7 @@ def generatePermalink(uuid):
 
 def launchActuationCycle(addr, port, hour, minute, turn_on):
     global actuation_tasks
-    global actuation_tasks_lock
+    global running_timers
 
     requested_time = datetime.time(hour, minute)
     now = datetime.datetime.today()
@@ -85,16 +86,17 @@ def launchActuationCycle(addr, port, hour, minute, turn_on):
     timer.daemon = True
     timer.start()
 
-    task = {"addr": addr, "port": port, "hour": hour, "minute": minute, "turnOn": turn_on}
     with actuation_tasks_lock:
-        actuation_tasks.append(task)
+        actuation_tasks.add((addr, port, hour, minute, turn_on))
+        running_timers[(addr, port, hour, minute, turn_on)] = timer
 
-def cancelActuationCycle(addr, port, hour, minute):
+def cancelActuationCycle(addr, port, hour, minute, turn_on):
     global actuation_tasks
-    global actuation_tasks_lock
+    global running_timers
 
     with actuation_tasks_lock:
-        timer = actuation_tasks.pop((addr, port, hour, minute), None)
+        timer = running_timers.pop((addr, port, hour, minute, turn_on), None)
+        actuation_tasks.discard((addr, port, hour, minute, turn_on))
     if timer is not None:
         timer.cancel()
         return True
@@ -104,7 +106,7 @@ def cancelActuationCycle(addr, port, hour, minute):
 @atexit.register
 def writeActuationSchedule():
     with actuation_tasks_lock:
-        actuation_json = json.dumps(actuation_tasks)
+        actuation_json = json.dumps(list(actuation_tasks))
     with open("actuation_tasks.json", 'w') as f:
         f.write(actuation_json)
 
@@ -152,16 +154,17 @@ def homePage():
 
 @app.route('/plugstrips/<uuid>', methods=['GET'])
 def plugPage(uuid):
-    # Hard coded to demo the UI for now
-    with actuation_tasks_lock:
-        schedule = [ {"hour": hour, "minute": minute, "turn_on": turn_on}
-                     for ((_, _, hour, minute), (turn_on, _)) in
-                     actuation_tasks.iteritems() ]
-
     plug_info = issueSmapRequest('select * where uuid="{}" and Path like "power$"'.format(uuid))
     name = plug_info[0]["Metadata"]["Name"]
     location = plug_info[0]["Metadata"]["Location"]
     owner = plug_info[0]["Metadata"]["Owner"]
+    addr = plug_info[0]["Metadata"]["Address"]
+    port = int(plug_info[0]["Metadata"]["Port"])
+
+    with actuation_tasks_lock:
+        schedule = [ {"hour": ev_hour, "minute": ev_minute, "turn_on": ev_turn_on}
+                     for (ev_addr, ev_port, ev_hour, ev_minute, ev_turn_on) in actuation_tasks
+                     if ev_addr == addr and ev_port == port ]
 
     hour_data = issueSmapRequest( 'select data in (now-1hour, now) where uuid="{}"'.format(uuid))
     hour_reading_values = [ reading[1] for reading in hour_data[0]["Readings"] ]
@@ -217,7 +220,6 @@ def addActuationEvent(uuid):
     addr = plug_info[0]["Metadata"]["Address"]
     port = int(plug_info[0]["Metadata"]["Port"])
     event = request.json
-    print event
     launchActuationCycle(addr, port, int(event["hour"]), int(event["minute"]), event["turnOn"])
     return "Event Added", 201
 
@@ -227,7 +229,7 @@ def removeActuationEvent(uuid):
     addr = plug_info[0]["Metadata"]["Address"]
     port = int(plug_info[0]["Metadata"]["Port"])
     event = request.json
-    if cancelActuationCycle(addr, port, event["hour"], event["minute"]):
+    if cancelActuationCycle(addr, port, event["hour"], event["minute"], event["turnOn"]):
         return "Event Deleted", 204
     else:
         return "Event Does not Exist", 404
@@ -237,7 +239,6 @@ if __name__ == '__main__':
         with open("actuation_tasks.json") as f:
             actuation_json = f.read()
         saved_tasks = json.loads(actuation_json)
-        for task in saved_tasks:
-            launchActuationCycle(task["addr"], task["port"], task["hour"],
-                                 task["minute"], task["turnOn"])
+        for (addr, port, hour, minute, turnOn) in saved_tasks:
+            launchActuationCycle(addr, port, hour, minute, turnOn)
     app.run(host='0.0.0.0', debug=True)

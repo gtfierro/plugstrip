@@ -70,6 +70,7 @@
     <table class='table table-bordered'>
     <thead>
         <tr>
+            <th class='deleteCell'>Delete</th>
             <th>Time</th>
             <th>Action</th>
         </tr>
@@ -77,6 +78,7 @@
     <tbody id='actuationEvents'>
         {% for event in schedule %}
         <tr class='clickable'>
+            <td class="deleteCell"><button type='button' class='btn btn-danger tableDelBtn'>Remove Event</button></td>
             <td>{{ event["hour"] }}:{{ event["minute"] }}</td>
             {% if event["turn_on"] %}
             <td>Turn On</td>
@@ -87,7 +89,8 @@
         {% endfor %}
     </tbody>
     </table>
-    <button type='button' class='btn btn-info' id='bAddEvent'>Add Event to Schedule</button>
+    <button type='button' class='btn btn-success' id='bAddEvent'>Add Event to Schedule</button>
+    <button type='button' class='btn btn-danger' id='bDelEvent'>Remove Event from Schedule</button>
     <br/>
     <div class='row'>
         <div class='col-xs-4' id='divHour'>
@@ -108,6 +111,7 @@
     </div>
     <br/>
     <button type='button' class='btn btn-success' id='bSaveEvent'>Save Event</button>
+    <button type='button' class='btn btn-danger' id='bCancel'>Cancel</button>
 </div>
 </body>
 </html>
