@@ -202,6 +202,8 @@ def plugPage(uuid):
 @app.route('/plugstrips/<uuid>', methods=['POST'])
 def handleActuation(uuid):
     plug_info = issueSmapRequest('select Metadata/Address, Metadata/Port where uuid="{}"'.format(uuid))
+    if len(plug_info) == 0:
+        return 404
     addr = plug_info[0]["Metadata"]["Address"]
     port = int(plug_info[0]["Metadata"]["Port"])
     body = request.data
@@ -217,6 +219,8 @@ def handleActuation(uuid):
 @app.route('/plugstrips/<uuid>/schedule', methods=['POST'])
 def addActuationEvent(uuid):
     plug_info = issueSmapRequest('select Metadata/Address, Metadata/Port where uuid="{}"'.format(uuid))
+    if len(plug_info) == 0:
+        return 404
     addr = plug_info[0]["Metadata"]["Address"]
     port = int(plug_info[0]["Metadata"]["Port"])
     event = request.json
@@ -226,6 +230,8 @@ def addActuationEvent(uuid):
 @app.route('/plugstrips/<uuid>/schedule', methods=['DELETE'])
 def removeActuationEvent(uuid):
     plug_info = issueSmapRequest('select Metadata/Address, Metadata/Port where uuid="{}"'.format(uuid))
+    if len(plug_inf) == 0:
+        return 404
     addr = plug_info[0]["Metadata"]["Address"]
     port = int(plug_info[0]["Metadata"]["Port"])
     event = request.json
