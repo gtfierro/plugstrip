@@ -111,10 +111,11 @@ var PlugStripProject = React.createClass({
                    macaddr: device.macaddr});
     connected_macaddr = device.macaddr;
   },
-  configureDevice: function(device) {
+  configureDevice: function(device, uuid) {
     console.log("\n\configure: "+device.macaddr+"\n\n");
     this.setState({_screen: 'configure',
-                   macaddr: device.macaddr});
+                   macaddr: device.macaddr,
+                   devUUID: uuid});
   },
   renderBLERow: function(row) {
     console.log("row", row);
@@ -176,7 +177,7 @@ var PlugStripProject = React.createClass({
         page = <BLEDevice macaddr={this.state.macaddr} configure={this.configureDevice.bind(null, this.state.macaddr)} />
         break;
     case 'configure':
-        page = <PlugConfigure macaddr={this.state.macaddr} />
+        page = <PlugConfigure macaddr={connected_macaddr} devUUID={this.state.devUUID} />
         break;
     case 'menu':
     default:
@@ -234,14 +235,17 @@ var BLEDeviceRow = React.createClass({
 var BLEDevice = React.createClass({
     getInitialState: function() {
         return {
-            plugs: {}
+            plugs: {},
+            reportUUID: "",
         }
     },
     componentWillMount: function() {
         var self = this;
         BLE.connect(self.props.macaddr, function(res) {
             console.log("plugs", res);
-            self.setState({plugs: res});
+            var uuid = res['nodemac'];
+            delete res['nodemac'];
+            self.setState({plugs: res, reportUUID: uuid});
         });
     },
     setBLEState: function(state, plugnum) {
@@ -261,7 +265,7 @@ var BLEDevice = React.createClass({
                     {rows}
                 </View>
                 <View style={{marginBottom: 30, padding: 20}}>
-                    <TouchableHighlight onPress={this.props.configure}>
+                    <TouchableHighlight onPress={this.props.configure.bind(null, this.state.reportUUID)}>
                         <Text style={{fontSize: 20, padding:20, textAlign: 'center'}}>Configure</Text>
                     </TouchableHighlight>
                 </View>
@@ -402,7 +406,10 @@ var PlugConfigure = React.createClass({
         return (
             <View>
                 <Text style={{ fontSize: 24, textAlign: 'center' }}>
-                Configuring PlugStrip {this.props.macaddr}
+                Configuring PlugStrip
+                </Text>
+                <Text style={{ fontSize: 22, textAlign: 'center' }}>
+                {this.props.macaddr}
                 </Text>
                 <View style={styles.formContainer}>
                     <View style={styles.formRow}>

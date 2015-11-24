@@ -207,6 +207,9 @@ public class BLEScanModule extends ReactContextBaseJavaModule {
                 plugdefaultstate.putString("uuid", (plug == null) ? "" : PLUGDEFAULT.toString());
                 plugdefaultstate.putInt("state", state);
                 found.putMap("1", plugdefaultstate);
+
+                BluetoothDevice dev = gatt.getDevice();
+                found.putString("nodemac", UUID.nameUUIDFromBytes(dev.getAddress().getBytes()).toString());
                 callback.invoke(found);
             }
           };
