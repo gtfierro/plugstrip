@@ -9,6 +9,8 @@
     "react": "^0.14.2",
     "react-native": "^0.13.2",
     "react-native-button": "^1.2.1",
+    "react-native-dropdown-android": "0.0.4",
+    "react-native-form": "^0.1.6",
     "react-tap-event-plugin": "^0.2.1"
   }
 }

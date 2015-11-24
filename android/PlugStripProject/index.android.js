@@ -7,11 +7,17 @@
 var Button = require('react-native-button');
 var React = require('react-native');
 var BLE =  require('./bleScan');
+var Form = require('react-native-form');
+var Dropdown = require('react-native-dropdown-android');
+var util = require('./util');
+
 var {
   AppRegistry,
   Image,
   StyleSheet,
   Text,
+  SwitchAndroid,
+  TextInput,
   View,
   ListView,
   ToastAndroid,
@@ -50,7 +56,6 @@ var PlugStripProject = React.createClass({
     ToastAndroid.show("Pressed schedule", ToastAndroid.SHORT);
   },
   scanPress: function() {
-    ToastAndroid.show("Pressed scan", ToastAndroid.SHORT);
     var self =  this;
     BLE.scan(function(res) {
         console.log("results", res);
@@ -101,6 +106,11 @@ var PlugStripProject = React.createClass({
     this.setState({_screen: 'plugstrip',
                    macaddr: device.macaddr});
   },
+  configureDevice: function(device) {
+    console.log("\n\configure: "+device.macaddr+"\n\n");
+    this.setState({_screen: 'configure',
+                   macaddr: device.macaddr});
+  },
   renderBLERow: function(row) {
     console.log("row", row);
     return (
@@ -144,16 +154,24 @@ var PlugStripProject = React.createClass({
         />
     );
 
+    var configurePage = (
+        <View>
+            <Text>configure</Text>
+        </View>
+    );
+
     switch (this.state._screen) {
     case 'query':
         page = queryPage;
         break;
     case 'scan':
-        console.log("scan page!");
         page = scanPage;
         break;
     case 'plugstrip':
-        page = <BLEDevice macaddr={this.state.macaddr}/>
+        page = <BLEDevice macaddr={this.state.macaddr} configure={this.configureDevice.bind(null, this.state.macaddr)} />
+        break;
+    case 'configure':
+        page = <PlugConfigure macaddr={this.state.macaddr} />
         break;
     case 'menu':
     default:
@@ -199,9 +217,9 @@ var BLEDeviceRow = React.createClass({
         return (
           <TouchableHighlight onPress={this.props.connectDevice}>
             <View style={styles.bleDeviceRow}>
-              <Text>{this.props.device.macaddr}</Text>
-              <Text>{this.props.device.rssi}</Text>
-              <Text>{this.props.device.name}</Text>
+              <Text style={styles.bleDeviceRowText} >{this.props.device.macaddr}</Text>
+              <Text style={styles.bleDeviceRowText} >{this.props.device.rssi}</Text>
+              <Text style={styles.bleDeviceRowText} >{this.props.device.name}</Text>
             </View>
           </TouchableHighlight>
         )
@@ -237,6 +255,11 @@ var BLEDevice = React.createClass({
         return (
             <View style={styles.bledevice}>
                 {rows}
+                <TouchableHighlight style={{marginBottom: 30}} onPress={this.props.configure}>
+                    <View style={{padding: 20}}>
+                        <Text style={{fontSize: 20, textAlign: 'center'}}>Configure</Text>
+                    </View>
+                </TouchableHighlight>
             </View>
         );
     }
@@ -269,6 +292,144 @@ var BLEPlug = React.createClass({
                 </TouchableHighlight>
             </View>
         );
+    }
+});
+
+var PlugConfigure = React.createClass({
+    getInitialState: function() {
+        return {'buildings': [],
+                'floors': ['waiting...'],
+                'rooms': ['waiting...'],
+               }
+    },
+    getBuildings: function() {
+        var self = this;
+        util.QuerySmap("select distinct Metadata/Location/Building",
+            function(data) {
+                console.log("BUILDINGS", data);
+                if (data.length == 0) {
+                    data = ['None Found'];
+                } else {
+                    data.unshift('--choose--');
+                }
+                self.setState({'buildings': data});
+            },
+            function(err) {
+                self.setState({'buildings': ['ERROR']});
+                console.err(data);
+            }
+        )
+    },
+    getFloors: function() {
+        var self = this;
+        util.QuerySmap("select distinct Metadata/Location/Floor where Metadata/Location/Buildings='"+this.state.building+"';",
+            function(data) {
+                console.log("FLOORS", data);
+                if (data.length == 0) {
+                    data = ['None Found'];
+                }
+                self.setState({'floors': data});
+            },
+            function(err) {
+                self.setState({'floors': ['ERROR']});
+                console.err(data);
+            }
+        )
+    },
+    getRooms: function() {
+        var self = this;
+        util.QuerySmap("select distinct Metadata/Location/Room where Metadata/Location/Floor='"+this.state.floor+"' and Metadata/Location/Buildings='"+this.state.building+"';",
+            function(data) {
+                console.log("ROOMS", data);
+                if (data.length == 0) {
+                    data = ['None Found'];
+                }
+                self.setState({'rooms': data});
+            },
+            function(err) {
+                self.setState({'rooms': ['ERROR']});
+                console.err(data);
+            }
+        )
+    },
+    componentWillMount: function() {
+        this.getBuildings();
+    },
+    render: function() {
+        return (
+            <View>
+                <Text style={{ fontSize: 24, textAlign: 'center' }}>
+                Configuring PlugStrip {this.props.macaddr}
+                </Text>
+                <View style={styles.formContainer}>
+                    <View style={styles.formRow}>
+                        <Text style={{ fontSize: 20, width: 90 }}> Building: </Text>
+                        <Dropdown
+                            style={{ height: 20, width: 120 }}
+                            values={this.state.buildings}
+                            selected={0} 
+                            onChange={(data) => {
+                                this.setState({'building': data.value}); 
+                                this.getFloors(); 
+                            }}
+                            name="building"
+                        />
+                        <TextInput style={{ width: 120 }} 
+                            onChangeText={(text) => {
+                                this.setState({'building': text})
+                            }} 
+                            placeholder="New Building" 
+                        />
+                    </View>
+                    <View style={styles.formRow}>
+                        <Text style={{ fontSize: 20, width: 90 }}> Floor </Text>
+                        <Dropdown
+                            style={{ height: 20, width: 120 }}
+                            values={this.state.floors}
+                            selected={0} 
+                            onChange={(data) => {
+                                if (data.value == 'None Found') {return;} 
+                                this.setState({'floor': data.value}); 
+                                this.getRooms(); 
+                            }}
+                            name="floor"
+                        />
+                        <TextInput style={{ width: 120 }} 
+                            onChangeText={(text) => {
+                                this.setState({'floor': text})
+                                this.getRooms(); 
+                            }} 
+                            placeholder="New Floor" 
+                        />
+                    </View>
+                    <View style={styles.formRow}>
+                        <Text style={{ fontSize: 20, width: 90 }}> Room </Text>
+                        <Dropdown
+                            style={{ height: 20, width: 120 }}
+                            values={this.state.rooms}
+                            selected={0} 
+                            onChange={(data) => {
+                                if (data.value == 'None Found') {return;} 
+                                this.setState({'room': data.value});
+                            }}
+                            name="room"
+                        />
+                        <TextInput style={{ width: 120 }} 
+                            onChangeText={(text) => {
+                                this.setState({'room': text})
+                            }} 
+                            placeholder="New Room" 
+                        />
+                    </View>
+                </View>
+                <View style={{ marginBottom: 20, margin: 20, height: 60 }} >
+                    <TouchableHighlight>
+                        <Text style={{fontSize: 24, textAlign: 'center'}}>Configure!</Text>
+                    </TouchableHighlight>
+                </View>
+
+            </View>
+        )
     }
 });
 
@@ -311,7 +472,7 @@ var styles = StyleSheet.create({
     paddingBottom: 20,
   },
   bleHeaderText: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: 'bold',
     textDecorationLine: 'underline',
     textDecorationStyle: 'solid',
@@ -325,10 +486,14 @@ var styles = StyleSheet.create({
     paddingBottom: 10,
     borderRadius: 4,
     borderWidth: 0.5,    
+    height: 100,
     borderColor: '#d6d7da',
   },
+  bleDeviceRowText: {
+    fontSize: 16,
+  },
   welcome: {
-    fontSize: 20,
+    fontSize: 36,
     textAlign: 'center',
     margin: 10,
     marginTop: 10,
@@ -340,6 +505,16 @@ var styles = StyleSheet.create({
   listView: {
     paddingTop: 20,
     backgroundColor: '#F5FCFF',
+  },
+  formContainer: {
+    flex: 1,
+  },
+  formRow: {
+    margin: 5,
+    height: 80,
+    padding: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });
 
