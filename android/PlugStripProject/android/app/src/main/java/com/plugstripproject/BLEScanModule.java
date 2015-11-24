@@ -172,37 +172,43 @@ public class BLEScanModule extends ReactContextBaseJavaModule {
                 //doMessage("found service"+gatt+" looking for "+PLUG_STRIP_SERVICE_UUID);
                 BluetoothGattService plugstrip = gatt.getService(PLUG_STRIP_SERVICE_UUID);
                 //doMessage("found plugstrip service"+plugstrip);
-                plug1 = plugstrip.getCharacteristic(PLUG1);
-                plug2 = plugstrip.getCharacteristic(PLUG2);
-                plug3 = plugstrip.getCharacteristic(PLUG3);
-                plug4 = plugstrip.getCharacteristic(PLUG4);
+                //plug1 = plugstrip.getCharacteristic(PLUG1);
+                //plug2 = plugstrip.getCharacteristic(PLUG2);
+                //plug3 = plugstrip.getCharacteristic(PLUG3);
+                //plug4 = plugstrip.getCharacteristic(PLUG4);
                 plugdefault = plugstrip.getCharacteristic(PLUGDEFAULT);
+                mBluetoothGatt.readCharacteristic(plugdefault);
 
+            }
+
+            @Override
+            public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic plug, int status) {
                 // report back what we found
                 WritableMap found = Arguments.createMap();
 
-                WritableMap plug1state = Arguments.createMap();
-                plug1state.putString("uuid", (plug1 == null) ? "" : PLUG1.toString());
-                plug1state.putInt("state", (plug1 == null) ? 0 : plug1.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0));
-                found.putMap("plug1", plug1state);
+                //WritableMap plug1state = Arguments.createMap();
+                //plug1state.putString("uuid", (plug1 == null) ? "" : PLUG1.toString());
+                //plug1state.putInt("state", (plug1 == null) ? 0 : plug1.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0));
+                //found.putMap("plug1", plug1state);
 
-                WritableMap plug2state = Arguments.createMap();
-                plug2state.putString("uuid", (plug2 == null) ? "" : PLUG2.toString());
-                plug2state.putInt("state", (plug2 == null) ? 0 : plug2.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0));
-                found.putMap("plug2", plug2state);
+                //WritableMap plug2state = Arguments.createMap();
+                //plug2state.putString("uuid", (plug2 == null) ? "" : PLUG2.toString());
+                //plug2state.putInt("state", (plug2 == null) ? 0 : plug2.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0));
+                //found.putMap("plug2", plug2state);
+                if (status != BluetoothGatt.GATT_SUCCESS) {
+                    doMessage("Error reading characteristic");
+                }
 
+                int state = 0;
+                if (plug != null && plug.getValue()[0] != (byte)48) { // byte value of string "0"
+                    state = 1;
+                }
                 WritableMap plugdefaultstate = Arguments.createMap();
-                plugdefaultstate.putString("uuid", (plugdefault == null) ? "" : PLUGDEFAULT.toString());
-                plugdefaultstate.putInt("state", (plugdefault == null) ? 0 : 1);//plugdefault.getValue()[0]);
-                found.putMap("plugdefault", plugdefaultstate);
+                plugdefaultstate.putString("uuid", (plug == null) ? "" : PLUGDEFAULT.toString());
+                plugdefaultstate.putInt("state", state);
+                found.putMap("1", plugdefaultstate);
                 callback.invoke(found);
             }
-
-            //@Override
-            //public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            //    // add to list of characteristics
-            //    doMessage("found characteristic"+gatt+characteristic);
-            //}
           };
 
 

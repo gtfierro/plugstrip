@@ -49,6 +49,7 @@ var PlugStripProject = React.createClass({
             self.setState({macaddr: connected_macaddr, _screen: 'plugstrip'});
             return true;
         } else if (self.state._screen != 'menu') {
+            BLE.disconnect();
             self.setState({_screen: 'menu'});
             return true;
         }
@@ -239,8 +240,6 @@ var BLEDevice = React.createClass({
     componentWillMount: function() {
         var self = this;
         BLE.connect(self.props.macaddr, function(res) {
-            console.log(res.plug1.uuid)
-            console.log(res.plug1.state)
             console.log("plugs", res);
             self.setState({plugs: res});
         });
