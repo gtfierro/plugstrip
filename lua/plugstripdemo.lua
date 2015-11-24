@@ -11,7 +11,7 @@ serverport = 5555
 
 connect = function(connect)
     print("connected?", connect)
-    storm.bl.notify(char_handle, "connected!")
+    storm.bl.notify(char_handle, state)
 end
 
 actuate = function(val)
