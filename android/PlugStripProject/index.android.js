@@ -26,6 +26,7 @@ var {
   TouchableHighlight,
 } = React;
 
+var connected_macaddr = null;
 
 var PlugStripProject = React.createClass({
   getInitialState: function() {
@@ -44,8 +45,10 @@ var PlugStripProject = React.createClass({
   componentWillMount: function() {
     var self = this;
     BackAndroid.addEventListener('hardwareBackPress', function() {
-        BLE.disconnect();
-        if (self.state._screen != 'menu') {
+        if (self.state._screen == 'configure') {
+            self.setState({macaddr: connected_macaddr, _screen: 'plugstrip'});
+            return true;
+        } else if (self.state._screen != 'menu') {
             self.setState({_screen: 'menu'});
             return true;
         }
@@ -105,6 +108,7 @@ var PlugStripProject = React.createClass({
     console.log("\n\nConnect: "+device.macaddr+"\n\n");
     this.setState({_screen: 'plugstrip',
                    macaddr: device.macaddr});
+    connected_macaddr = device.macaddr;
   },
   configureDevice: function(device) {
     console.log("\n\configure: "+device.macaddr+"\n\n");
@@ -253,13 +257,15 @@ var BLEDevice = React.createClass({
         }
         console.log("rows", rows);
         return (
-            <View style={styles.bledevice}>
-                {rows}
-                <TouchableHighlight style={{marginBottom: 30}} onPress={this.props.configure}>
-                    <View style={{padding: 20}}>
-                        <Text style={{fontSize: 20, textAlign: 'center'}}>Configure</Text>
-                    </View>
-                </TouchableHighlight>
+            <View>
+                <View style={styles.bledevice}>
+                    {rows}
+                </View>
+                <View style={{marginBottom: 30, padding: 20}}>
+                    <TouchableHighlight onPress={this.props.configure}>
+                        <Text style={{fontSize: 20, padding:20, textAlign: 'center'}}>Configure</Text>
+                    </TouchableHighlight>
+                </View>
             </View>
         );
     }
@@ -300,6 +306,7 @@ var PlugConfigure = React.createClass({
         return {'buildings': [],
                 'floors': ['waiting...'],
                 'rooms': ['waiting...'],
+                'owners': ['waiting...'],
                }
     },
     getBuildings: function() {
@@ -352,8 +359,45 @@ var PlugConfigure = React.createClass({
             }
         )
     },
+    getOwners: function() {
+        var self = this;
+        util.QuerySmap("select distinct Metadata/Owner where Metadata/Location/Building='"+this.state.building+"';",
+            function(data) {
+                console.log("Owners", data);
+                if (data.length == 0) {
+                    data = ['None Found'];
+                }
+                self.setState({'owners': data});
+            },
+            function(err) {
+                self.setState({'owners': ['ERROR']});
+                console.err(data);
+            }
+        )
+    },
+    getDevices: function() {
+        var self = this;
+        util.QuerySmap("select distinct Metadata/Device/Type;",
+            function(data) {
+                console.log("Devices", data);
+                if (data.length == 0) {
+                    data = ['None Found'];
+                }
+                self.setState({'devices': data});
+            },
+            function(err) {
+                self.setState({'devices': ['ERROR']});
+                console.err(data);
+            }
+        )
+    },
+    doConfigure: function() {
+        // pack up the stuff into a real sMAP object
+        // TODO: how do we discover the UUID?
+    },
     componentWillMount: function() {
         this.getBuildings();
+        this.getDevices();
     },
     render: function() {
         return (
@@ -367,18 +411,18 @@ var PlugConfigure = React.createClass({
                         <Dropdown
                             style={{ height: 20, width: 120 }}
                             values={this.state.buildings}
-                            selected={0} 
+                            selected={0}
                             onChange={(data) => {
-                                this.setState({'building': data.value}); 
-                                this.getFloors(); 
+                                this.setState({'building': data.value});
+                                this.getFloors();
                             }}
                             name="building"
                         />
-                        <TextInput style={{ width: 120 }} 
+                        <TextInput style={{ width: 120 }}
                             onChangeText={(text) => {
                                 this.setState({'building': text})
-                            }} 
-                            placeholder="New Building" 
+                            }}
+                            placeholder="New Building"
                         />
                     </View>
                     <View style={styles.formRow}>
@@ -386,20 +430,20 @@ var PlugConfigure = React.createClass({
                         <Dropdown
                             style={{ height: 20, width: 120 }}
                             values={this.state.floors}
-                            selected={0} 
+                            selected={0}
                             onChange={(data) => {
-                                if (data.value == 'None Found') {return;} 
-                                this.setState({'floor': data.value}); 
-                                this.getRooms(); 
+                                if (data.value == 'None Found') {return;}
+                                this.setState({'floor': data.value});
+                                this.getRooms();
                             }}
                             name="floor"
                         />
-                        <TextInput style={{ width: 120 }} 
+                        <TextInput style={{ width: 120 }}
                             onChangeText={(text) => {
                                 this.setState({'floor': text})
-                                this.getRooms(); 
-                            }} 
-                            placeholder="New Floor" 
+                                this.getRooms();
+                            }}
+                            placeholder="New Floor"
                         />
                     </View>
                     <View style={styles.formRow}>
@@ -407,18 +451,58 @@ var PlugConfigure = React.createClass({
                         <Dropdown
                             style={{ height: 20, width: 120 }}
                             values={this.state.rooms}
-                            selected={0} 
+                            selected={0}
                             onChange={(data) => {
-                                if (data.value == 'None Found') {return;} 
+                                if (data.value == 'None Found') {return;}
                                 this.setState({'room': data.value});
+                                this.getOwners();
                             }}
                             name="room"
                         />
-                        <TextInput style={{ width: 120 }} 
+                        <TextInput style={{ width: 120 }}
                             onChangeText={(text) => {
                                 this.setState({'room': text})
-                            }} 
-                            placeholder="New Room" 
+                                this.getOwners();
+                            }}
+                            placeholder="New Room"
+                        />
+                    </View>
+                    <View style={styles.formRow}>
+                        <Text style={{ fontSize: 20, width: 90 }}> Owner </Text>
+                        <Dropdown
+                            style={{ height: 20, width: 120 }}
+                            values={this.state.owners}
+                            selected={0}
+                            onChange={(data) => {
+                                if (data.value == 'None Found') {return;}
+                                this.setState({'owner': data.value});
+                            }}
+                            name="owner"
+                        />
+                        <TextInput style={{ width: 120 }}
+                            onChangeText={(text) => {
+                                this.setState({'owner': text})
+                            }}
+                            placeholder="New Owner"
+                        />
+                    </View>
+                    <View style={styles.formRow}>
+                        <Text style={{ fontSize: 20, width: 90 }}> Device </Text>
+                        <Dropdown
+                            style={{ height: 20, width: 120 }}
+                            values={this.state.devices}
+                            selected={0}
+                            onChange={(data) => {
+                                if (data.value == 'None Found') {return;}
+                                this.setState({'device': data.value});
+                            }}
+                            name="device"
+                        />
+                        <TextInput style={{ width: 120 }}
+                            onChangeText={(text) => {
+                                this.setState({'device': text})
+                            }}
+                            placeholder="New Device"
                         />
                     </View>
                 </View>
@@ -485,7 +569,7 @@ var styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 10,
     borderRadius: 4,
-    borderWidth: 0.5,    
+    borderWidth: 0.5,
     height: 100,
     borderColor: '#d6d7da',
   },
