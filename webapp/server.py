@@ -155,6 +155,8 @@ def homePage():
 @app.route('/plugstrips/<uuid>', methods=['GET'])
 def plugPage(uuid):
     plug_info = issueSmapRequest('select * where uuid="{}" and Path like "power$"'.format(uuid))
+    if len(plug_info) == 0:
+        return "UUID does not match a known plugstrip", 404
     name = plug_info[0]["Metadata"]["Name"]
     location = plug_info[0]["Metadata"]["Location"]
     owner = plug_info[0]["Metadata"]["Owner"]
@@ -167,19 +169,31 @@ def plugPage(uuid):
                      if ev_addr == addr and ev_port == port ]
 
     hour_data = issueSmapRequest( 'select data in (now-1hour, now) where uuid="{}"'.format(uuid))
-    hour_reading_values = [ reading[1] for reading in hour_data[0]["Readings"] ]
-    hour_total = sum(hour_reading_values)
-    hour_peak = max(hour_reading_values)
+    if len(hour_data) == 0:
+        hour_total = "No data found for last hour"
+        hour_peak = "No data found for last hour"
+    else:
+        hour_reading_values = [ reading[1] for reading in hour_data[0]["Readings"] ]
+        hour_total = "{} W".format(sum(hour_reading_values))
+        hour_peak = "{} W".format(max(hour_reading_values))
 
     day_data= issueSmapRequest('select data in (now-1day, now) where uuid="{}"'.format(uuid))
-    day_reading_values = [ reading[1] for reading in day_data[0]["Readings"] ]
-    day_total = sum(day_reading_values)
-    day_peak = max(day_reading_values)
+    if len(day_data) == 0:
+        day_total = "No data found for last day"
+        day_peak = "No data found for last day"
+    else:
+        day_reading_values = [ reading[1] for reading in day_data[0]["Readings"] ]
+        day_total = "{} W".format(sum(day_reading_values))
+        day_peak = "{} W".format(max(day_reading_values))
 
     week_data = issueSmapRequest('select data in (now-7days, now) where uuid="{}"'.format(uuid))
-    week_reading_values = [ reading[1] for reading in week_data[0]["Readings"] ]
-    week_total = sum(week_reading_values)
-    week_peak = max(week_reading_values)
+    if len(week_data) == 0:
+        week_total = "No data found for last week"
+        week_peak = "No data found for last week"
+    else:
+        week_reading_values = [ reading[1] for reading in week_data[0]["Readings"] ]
+        week_total = "{} W".format(sum(week_reading_values))
+        week_peak = "{} W".format(max(week_reading_values))
 
     permalink_code = generatePermalink(uuid)
 
@@ -203,11 +217,11 @@ def plugPage(uuid):
 def handleActuation(uuid):
     plug_info = issueSmapRequest('select Metadata/Address, Metadata/Port where uuid="{}"'.format(uuid))
     if len(plug_info) == 0:
-        return 404
+        return "UUID does not correspond to known plugstrip", 404
     addr = plug_info[0]["Metadata"]["Address"]
     port = int(plug_info[0]["Metadata"]["Port"])
     body = request.data
-    if  body == '0':
+    if body == '0':
         actuatePlug(addr, port, False)
         return "Actuation Completed", 201
     elif body == '1':
@@ -224,17 +238,22 @@ def addActuationEvent(uuid):
     addr = plug_info[0]["Metadata"]["Address"]
     port = int(plug_info[0]["Metadata"]["Port"])
     event = request.json
+    if "hour" not in event or "minute" not in event or "turnOn" not in event:
+        return 'Actuation event requires "hour", "minute", and "turnOn" fields', 400
+
     launchActuationCycle(addr, port, int(event["hour"]), int(event["minute"]), event["turnOn"])
     return "Event Added", 201
 
 @app.route('/plugstrips/<uuid>/schedule', methods=['DELETE'])
 def removeActuationEvent(uuid):
     plug_info = issueSmapRequest('select Metadata/Address, Metadata/Port where uuid="{}"'.format(uuid))
-    if len(plug_inf) == 0:
-        return 404
+    if len(plug_info) == 0:
+        return "UUID does not correspond to known plugstrip", 404
     addr = plug_info[0]["Metadata"]["Address"]
     port = int(plug_info[0]["Metadata"]["Port"])
     event = request.json
+    if "hour" not in event or "minute" not in event or "turnOn" not in event:
+        return 'Actuation event requires "hour", "minute", and  "turnOn" fields', 400
     if cancelActuationCycle(addr, port, event["hour"], event["minute"], event["turnOn"]):
         return "Event Deleted", 204
     else:
