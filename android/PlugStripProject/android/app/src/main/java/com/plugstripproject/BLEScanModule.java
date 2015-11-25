@@ -13,6 +13,8 @@ import android.bluetooth.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 
@@ -36,6 +38,7 @@ public class BLEScanModule extends ReactContextBaseJavaModule {
     Context reactContext;
     private BluetoothAdapter mBluetoothAdapter;
     private BluetoothGatt mBluetoothGatt;
+    private BluetoothGatt mBluetoothGattMAC;
     private final static int REQUEST_ENABLE_BT = 1;
     private static final long SCAN_PERIOD = 5000; // scan for 5 seconds
     private Handler mHandler;
@@ -47,6 +50,7 @@ public class BLEScanModule extends ReactContextBaseJavaModule {
     private BluetoothGattCharacteristic plug3;
     private BluetoothGattCharacteristic plug4;
     private BluetoothGattCharacteristic plugdefault;
+    private BluetoothGattCharacteristic nodemac;
 
     private int mConnectionState = STATE_DISCONNECTED;
 
@@ -60,6 +64,8 @@ public class BLEScanModule extends ReactContextBaseJavaModule {
     public final static UUID PLUG3 = UUID.fromString("0000b003-0000-1000-8000-00805f9b34fb");
     public final static UUID PLUG4 = UUID.fromString("0000b004-0000-1000-8000-00805f9b34fb");
     public final static UUID PLUGDEFAULT = UUID.fromString("0000b00d-0000-1000-8000-00805f9b34fb");
+    public final static UUID NODEMAC = UUID.fromString("0000b00e-0000-1000-8000-00805f9b34fb");
+    private final static UUID NAMESPACE = UUID.fromString("9e7440b8-92fc-11e5-8bb3-0cc47a0f7eea");
 
     public final static String ACTION_GATT_CONNECTED =
       "com.plugstripproject.bluetooth.le.ACTION_GATT_CONNECTED";
@@ -172,10 +178,6 @@ public class BLEScanModule extends ReactContextBaseJavaModule {
                 //doMessage("found service"+gatt+" looking for "+PLUG_STRIP_SERVICE_UUID);
                 BluetoothGattService plugstrip = gatt.getService(PLUG_STRIP_SERVICE_UUID);
                 //doMessage("found plugstrip service"+plugstrip);
-                //plug1 = plugstrip.getCharacteristic(PLUG1);
-                //plug2 = plugstrip.getCharacteristic(PLUG2);
-                //plug3 = plugstrip.getCharacteristic(PLUG3);
-                //plug4 = plugstrip.getCharacteristic(PLUG4);
                 plugdefault = plugstrip.getCharacteristic(PLUGDEFAULT);
                 mBluetoothGatt.readCharacteristic(plugdefault);
 
@@ -186,15 +188,6 @@ public class BLEScanModule extends ReactContextBaseJavaModule {
                 // report back what we found
                 WritableMap found = Arguments.createMap();
 
-                //WritableMap plug1state = Arguments.createMap();
-                //plug1state.putString("uuid", (plug1 == null) ? "" : PLUG1.toString());
-                //plug1state.putInt("state", (plug1 == null) ? 0 : plug1.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0));
-                //found.putMap("plug1", plug1state);
-
-                //WritableMap plug2state = Arguments.createMap();
-                //plug2state.putString("uuid", (plug2 == null) ? "" : PLUG2.toString());
-                //plug2state.putInt("state", (plug2 == null) ? 0 : plug2.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0));
-                //found.putMap("plug2", plug2state);
                 if (status != BluetoothGatt.GATT_SUCCESS) {
                     doMessage("Error reading characteristic");
                 }
@@ -207,7 +200,7 @@ public class BLEScanModule extends ReactContextBaseJavaModule {
                 plugdefaultstate.putString("uuid", (plug == null) ? "" : PLUGDEFAULT.toString());
                 plugdefaultstate.putInt("state", state);
                 found.putMap("1", plugdefaultstate);
-
+                
                 BluetoothDevice dev = gatt.getDevice();
                 found.putString("nodemac", UUID.nameUUIDFromBytes(dev.getAddress().getBytes()).toString());
                 callback.invoke(found);
@@ -224,6 +217,68 @@ public class BLEScanModule extends ReactContextBaseJavaModule {
 
         mBluetoothGatt = dev.connectGatt(getReactApplicationContext(), false, mGattCallback);
         
+    }
+
+    private void readNodeMAC(final String macaddr, final Callback callback) {
+        BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
+            @Override
+            public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+                if (newState == BluetoothProfile.STATE_CONNECTED) {
+                    mConnectionState = STATE_CONNECTED;
+                    mBluetoothGattMAC.discoverServices();
+                } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                    mConnectionState = STATE_DISCONNECTED;
+                }
+            }
+
+            @Override
+            public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+                mGatt = gatt;
+                BluetoothGattService plugstrip = gatt.getService(PLUG_STRIP_SERVICE_UUID);
+                nodemac = plugstrip.getCharacteristic(NODEMAC);
+                mBluetoothGattMAC.readCharacteristic(nodemac);
+            }
+            @Override
+            public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic device, int status) {
+                // report back what we found
+                WritableMap found = Arguments.createMap();
+
+                if (status != BluetoothGatt.GATT_SUCCESS) {
+                    doMessage("Error reading characteristic");
+                }
+                BluetoothDevice dev = gatt.getDevice();
+
+                //http://stackoverflow.com/questions/9504519/what-namespace-does-the-jdk-use-to-generate-a-uuid-with-nameuuidfrombytes
+                long msb = NAMESPACE.getMostSignificantBits();
+                long lsb = NAMESPACE.getLeastSignificantBits();
+                byte[] namespacebuffer = new byte[16];
+                for (int i=0; i<8; i++) {
+                    namespacebuffer[i] = (byte) (msb >>> 8*(7-i));
+                    namespacebuffer[8+i] = (byte) (lsb >>> 8*(7-(8+i)));
+                }
+                ByteArrayOutputStream os = new ByteArrayOutputStream();
+                try {
+                    os.write(namespacebuffer);
+                    os.write(device.getStringValue(0).getBytes());
+                } catch (IOException e) {
+                    callback.invoke(found);
+                }
+
+                found.putString("nodemac", UUID.nameUUIDFromBytes(os.toByteArray()).toString());
+
+
+                callback.invoke(found);
+                mBluetoothGattMAC.close();
+            }
+        };
+
+        BluetoothDevice dev = myDevices.get(macaddr);
+        if (dev == null) {
+            doMessage("device was null for macaddr "+macaddr);
+            return;
+        }
+
+        mBluetoothGattMAC = dev.connectGatt(getReactApplicationContext(), false, mGattCallback);
     }
 
     public String getName(){
@@ -248,6 +303,16 @@ public class BLEScanModule extends ReactContextBaseJavaModule {
             protected void doInBackgroundGuarded(Void ...params) {
                 doMessage("connect to "+macaddr);
                 getGATTView(macaddr, callback);
+            }
+        }.execute();
+    }
+
+    @ReactMethod
+    public void getNodeMAC(final String macaddr, final Callback callback) {
+        new GuardedAsyncTask<Void, Void>(getReactApplicationContext()) {
+            @Override
+            protected void doInBackgroundGuarded(Void ...params) {
+                readNodeMAC(macaddr, callback);
             }
         }.execute();
     }

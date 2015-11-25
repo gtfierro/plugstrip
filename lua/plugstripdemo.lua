@@ -12,6 +12,7 @@ serverport = 5555
 connect = function(connect)
     print("connected?", connect)
     storm.bl.notify(char_handle, state)
+    storm.bl.notify(uuid_handle, storm.os.getmacstring())
 end
 
 actuate = function(val)
@@ -32,6 +33,7 @@ onready = function()
     print("ready!")
     handle = storm.bl.addservice(0xb00c)
     char_handle = storm.bl.addcharacteristic(handle, 0xb00d, actuate)
+    uuid_handle = storm.bl.addcharacteristic(handle, 0xb00e, function() end)
 end
 
 sendstate = function()

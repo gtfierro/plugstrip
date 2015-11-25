@@ -111,11 +111,11 @@ var PlugStripProject = React.createClass({
                    macaddr: device.macaddr});
     connected_macaddr = device.macaddr;
   },
-  configureDevice: function(device, uuid) {
-    console.log("\n\configure: "+device.macaddr+"\n\n");
+  configureDevice: function(macBLE, devUUID) {
+    console.log("\n\configure: "+macBLE+"\n\n");
     this.setState({_screen: 'configure',
-                   macaddr: device.macaddr,
-                   devUUID: uuid});
+                   macaddr: macBLE,
+                   devUUID: devUUID});
   },
   renderBLERow: function(row) {
     console.log("row", row);
@@ -236,7 +236,7 @@ var BLEDevice = React.createClass({
     getInitialState: function() {
         return {
             plugs: {},
-            reportUUID: "",
+            devUUID: "",
         }
     },
     componentWillMount: function() {
@@ -245,7 +245,10 @@ var BLEDevice = React.createClass({
             console.log("plugs", res);
             var uuid = res['nodemac'];
             delete res['nodemac'];
-            self.setState({plugs: res, reportUUID: uuid});
+            self.setState({plugs: res});
+            BLE.getNodeMAC(self.props.macaddr, function(mac) {
+                self.setState({devUUID: mac.nodemac});
+            });
         });
     },
     setBLEState: function(state, plugnum) {
@@ -265,7 +268,7 @@ var BLEDevice = React.createClass({
                     {rows}
                 </View>
                 <View style={{marginBottom: 30, padding: 20}}>
-                    <TouchableHighlight onPress={this.props.configure.bind(null, this.state.reportUUID)}>
+                    <TouchableHighlight onPress={this.props.configure.bind(null, this.state.devUUID)}>
                         <Text style={{fontSize: 20, padding:20, textAlign: 'center'}}>Configure</Text>
                     </TouchableHighlight>
                 </View>
@@ -397,6 +400,7 @@ var PlugConfigure = React.createClass({
     doConfigure: function() {
         // pack up the stuff into a real sMAP object
         // TODO: how do we discover the UUID?
+        ToastAndroid.show(this.props.devUUID, ToastAndroid.SHORT);
     },
     componentWillMount: function() {
         this.getBuildings();
@@ -409,7 +413,7 @@ var PlugConfigure = React.createClass({
                 Configuring PlugStrip
                 </Text>
                 <Text style={{ fontSize: 22, textAlign: 'center' }}>
-                {this.props.macaddr}
+                {this.props.devUUID}
                 </Text>
                 <View style={styles.formContainer}>
                     <View style={styles.formRow}>
