@@ -13,6 +13,8 @@ import android.bluetooth.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 
@@ -245,7 +247,26 @@ public class BLEScanModule extends ReactContextBaseJavaModule {
                     doMessage("Error reading characteristic");
                 }
                 BluetoothDevice dev = gatt.getDevice();
-                found.putString("nodemac", device.getStringValue(0));
+
+                //http://stackoverflow.com/questions/9504519/what-namespace-does-the-jdk-use-to-generate-a-uuid-with-nameuuidfrombytes
+                long msb = NAMESPACE.getMostSignificantBits();
+                long lsb = NAMESPACE.getLeastSignificantBits();
+                byte[] namespacebuffer = new byte[16];
+                for (int i=0; i<8; i++) {
+                    namespacebuffer[i] = (byte) (msb >>> 8*(7-i));
+                    namespacebuffer[8+i] = (byte) (lsb >>> 8*(7-(8+i)));
+                }
+                ByteArrayOutputStream os = new ByteArrayOutputStream();
+                try {
+                    os.write(namespacebuffer);
+                    os.write(device.getStringValue(0).getBytes());
+                } catch (IOException e) {
+                    callback.invoke(found);
+                }
+
+                found.putString("nodemac", UUID.nameUUIDFromBytes(os.toByteArray()).toString());
+
+
                 callback.invoke(found);
                 mBluetoothGattMAC.close();
             }
