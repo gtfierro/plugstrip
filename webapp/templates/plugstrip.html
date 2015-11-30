@@ -79,7 +79,7 @@
         {% for event in schedule %}
         <tr class='clickable'>
             <td class="deleteCell"><button type='button' class='btn btn-danger tableDelBtn'>Remove Event</button></td>
-            <td>{{ event["hour"] }}:{{ event["minute"] }}</td>
+            <td>{{ "{}:{:02d}".format(event["hour"], event["minute"]) }}</td>
             {% if event["turn_on"] %}
             <td>Turn On</td>
             {% else %}

@@ -26,13 +26,17 @@ def issueSmapRequest(query_string):
 
 def getMaxPeak(plug_streams, uuid_to_names):
     reading_values = [ (x["uuid"], [ y[1] for y in x["Readings"] ]) for x in plug_streams ]
-    peaks = [ (uuid, max(readings)) for (uuid, readings) in reading_values ]
+    peaks = [ (uuid, max(readings)) for (uuid, readings) in reading_values if len(readings) > 0]
+    if len(peaks) == 0:
+        return ("No Plug Data Found", 0)
     max_uuid, max_val = max(peaks, key=lambda x: x[1])
     return (uuid_to_names[max_uuid], max_val)
 
 def getMaxTotal(plug_streams, uuid_to_names):
     reading_values = [ (x["uuid"], [ y[1] for y in x["Readings"] ]) for x in plug_streams ]
-    totals = [ (uuid, sum(readings)) for (uuid, readings) in reading_values ]
+    totals = [ (uuid, sum(readings)) for (uuid, readings) in reading_values if len(readings) > 0]
+    if len(totals) == 0:
+        return ("No Plug Data  Found", 0)
     max_uuid, max_val = max(totals, key=lambda x: x[1])
     return (uuid_to_names[max_uuid], max_val)
 
@@ -52,7 +56,6 @@ def actuateAndReschedule(addr, port, turn_on):
 def generatePermalink(uuid):
     request_params = {
         "autoupdate": True,
-        "axes": [{ "axisname": "Power Consumption (W)", "streams": [uuid], "scale": [0,15], "rightside": False }],
         "streams": [{ "stream": uuid, "color": "#0000FF" }],
         "window_type": "now",
         "window_width": 60 * 60 * 10e9, # One Hour in Nanoseconds
@@ -175,8 +178,12 @@ def plugPage(uuid):
         hour_peak = "No data found for last hour"
     else:
         hour_reading_values = [ reading[1] for reading in hour_data[0]["Readings"] ]
-        hour_total = "{} W".format(sum(hour_reading_values))
-        hour_peak = "{} W".format(max(hour_reading_values))
+        if len(hour_reading_values) == 0:
+            hour_total = "No data found for last hour"
+            hour_peak = "No data found for last hour"
+        else:
+            hour_total = "{} W".format(sum(hour_reading_values))
+            hour_peak = "{} W".format(max(hour_reading_values))
 
     day_data= issueSmapRequest('select data in (now-1day, now) where uuid="{}"'.format(uuid))
     if len(day_data) == 0:
@@ -184,8 +191,12 @@ def plugPage(uuid):
         day_peak = "No data found for last day"
     else:
         day_reading_values = [ reading[1] for reading in day_data[0]["Readings"] ]
-        day_total = "{} W".format(sum(day_reading_values))
-        day_peak = "{} W".format(max(day_reading_values))
+        if len(day_reading_values) == 0:
+            day_total = "No data found for last day"
+            day_peak = "No data found for last day"
+        else:
+            day_total = "{} W".format(sum(day_reading_values))
+            day_peak = "{} W".format(max(day_reading_values))
 
     week_data = issueSmapRequest('select data in (now-7days, now) where uuid="{}"'.format(uuid))
     if len(week_data) == 0:
@@ -193,8 +204,12 @@ def plugPage(uuid):
         week_peak = "No data found for last week"
     else:
         week_reading_values = [ reading[1] for reading in week_data[0]["Readings"] ]
-        week_total = "{} W".format(sum(week_reading_values))
-        week_peak = "{} W".format(max(week_reading_values))
+        if len(week_reading_values) == 0:
+            week_total = "No data found for last week"
+            week_peak = "No data found for last week"
+        else:
+            week_total = "{} W".format(sum(week_reading_values))
+            week_peak = "{} W".format(max(week_reading_values))
 
     permalink_code = generatePermalink(uuid)
 

@@ -44,11 +44,16 @@ $(document).ready(function() {
 
     $('#bSaveEvent').click(function() {
         var hour = $('#tHour').val()
+        var hourVal = parseInt(hour)
         var minute = $('#tMinute').val()
+        var minuteVal = parseInt(minute)
+        if (minuteVal < 10 && minute.length < 2) {
+            minute = "0" + minute
+        }
         var turnOnStr = $('#sAction').val()
         var requestData = {
-            "hour": parseInt(hour),
-            "minute": parseInt(minute),
+            "hour": hourVal,
+            "minute": minuteVal,
             "turnOn":  (turnOnStr === "Turn On")
         }
         var onSuccess = function(serverData, textStatus, request) {
