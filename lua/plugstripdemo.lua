@@ -19,9 +19,11 @@ actuate = function(val)
     print("actuating from",val)
     if (val == 0) or (val == "0") or (string.byte(val) == 0) or (string.byte(val) == 48) then
         storm.io.set(0, storm.io.D8)
+        storm.bl.notify(char_handle, 0)
         state = 0
     else
         storm.io.set(1, storm.io.D8)
+        storm.bl.notify(char_handle, 1)
         state = 1
     end
     sendstate()
