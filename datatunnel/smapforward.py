@@ -1,4 +1,5 @@
 import socket
+import copy
 import time
 import msgpack
 import random
@@ -16,9 +17,12 @@ else:
 
 stateuuids = streams.get('stateuuids', {})
 poweruuids = streams.get('poweruuids', {})
+voltageuuids = streams.get('voltageuuids', {})
+currentuuids = streams.get('currentuuids', {})
 paths = streams.get('paths', {})
 
-server = "http://localhost:8079/add/apikey"
+server = "http://54.84.37.77:8079/add/plugstrip"
+serverquery = "http://54.84.37.77:8079/api/query"
 
 sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
 sock.bind(("::", 5555))
@@ -28,7 +32,6 @@ payload = {
         "SourceName": "IDD 2015",
         "Location": {
             "City": "Berkeley",
-            "Building": "Jacobs",
         },
 	"Type": "plugstrip",
     },
@@ -48,33 +51,62 @@ while True:
         stateuuids[addr] = str(uuid.uuid1())
     if addr not in poweruuids:
         poweruuids[addr] = str(uuid.uuid1())
+    if addr not in voltageuuids:
+        voltageuuids[addr] = str(uuid.uuid1())
+    if addr not in currentuuids:
+        currentuuids[addr] = str(uuid.uuid1())
     if addr not in paths:
-        paths[addr] = "/plugstrip/strip"+str(len(paths)+1)
+        paths[addr] = "/plugstrip/strip"+str(len(paths))
     streams['stateuuids'] = stateuuids
     streams['poweruuids'] = poweruuids
+    streams['voltageuuids'] = voltageuuids
+    streams['currentuuids'] = currentuuids
     streams['paths'] = paths
     json.dump(streams, open('streams.json','w'))
-    print addr, data
     res = msgpack.unpackb(data)
-    data = res['val']
-    mac = res['mac']
+    # {'current': 4, 'state': 0, 'voltage': 208, 'power': 832}
+    current = float(res['current'])
+    state = float(res['state'])
+    voltage = float(res['voltage'])
+    power = float(res['power'])
     path = paths[addr]
-    print uuid.uuid3(namespace, mac)
+    mac = "00:12:6d:02:"+addr[-4:-2]+":"+addr[-2:]
+    print addr, mac, uuid.uuid3(namespace, mac)
+    payload["Metadata"]["Plugstrip"] = str(uuid.uuid3(namespace, mac))
+    payload["Metadata"]["Address"] = addr
+    payload["Metadata"]["Port"] = 5555
     message = {}
-    message[path+'/state'] = payload.copy()
+    message[path+'/state'] = copy.deepcopy(payload)
     message[path+'/state']["uuid"] = stateuuids[addr]
-    message[path+'/state']["Readings"] = [[int(time.time()), int(data)]]
+    message[path+'/state']["Readings"] = [[int(time.time()), state]]
+    message[path+'/state']["Properties"]["UnitofMeasure"] = "On/Off"
     message[path+'/state']["Metadata"]["Point"] = {}
     message[path+'/state']["Metadata"]["Point"]["Type"] = "Reading"
     message[path+'/state']["Metadata"]["Point"]["Measure"] = "State"
 
-    message[path+'/power'] = payload.copy()
+    message[path+'/power'] = copy.deepcopy(payload)
     message[path+'/power']["uuid"] = poweruuids[addr]
-    message[path+'/power']["Readings"] = [[int(time.time()), 4.5*int(data)+random.random()*0.5*int(data)]]
+    message[path+'/power']["Readings"] = [[int(time.time()), power]]
     message[path+'/power']["Properties"]["UnitofMeasure"] = "W"
     message[path+'/power']["Metadata"]["Point"] = {}
     message[path+'/power']["Metadata"]["Point"]["Type"] = "Sensor"
     message[path+'/power']["Metadata"]["Point"]["Measure"] = "Power"
+
+    message[path+'/voltage'] = copy.deepcopy(payload)
+    message[path+'/voltage']["uuid"] = voltageuuids[addr]
+    message[path+'/voltage']["Readings"] = [[int(time.time()), voltage]]
+    message[path+'/voltage']["Properties"]["UnitofMeasure"] = "V"
+    message[path+'/voltage']["Metadata"]["Point"] = {}
+    message[path+'/voltage']["Metadata"]["Point"]["Type"] = "Sensor"
+    message[path+'/voltage']["Metadata"]["Point"]["Measure"] = "Voltage"
+
+    message[path+'/current'] = copy.deepcopy(payload)
+    message[path+'/current']["uuid"] = currentuuids[addr]
+    message[path+'/current']["Readings"] = [[int(time.time()), current]]
+    message[path+'/current']["Properties"]["UnitofMeasure"] = "A"
+    message[path+'/current']["Metadata"]["Point"] = {}
+    message[path+'/current']["Metadata"]["Point"]["Type"] = "Sensor"
+    message[path+'/current']["Metadata"]["Point"]["Measure"] = "Current"
     print message
     resp = requests.post(server, data=json.dumps(message))
     print resp.ok, resp.content
