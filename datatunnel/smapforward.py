@@ -47,16 +47,17 @@ payload = {
 while True:
     data, addr = sock.recvfrom(1024)
     addr=addr[0]
-    if addr not in stateuuids:
-        stateuuids[addr] = str(uuid.uuid1())
-    if addr not in poweruuids:
-        poweruuids[addr] = str(uuid.uuid1())
-    if addr not in voltageuuids:
-        voltageuuids[addr] = str(uuid.uuid1())
-    if addr not in currentuuids:
-        currentuuids[addr] = str(uuid.uuid1())
-    if addr not in paths:
-        paths[addr] = "/plugstrip/strip"+str(len(paths))
+    mac = "00:12:6d:02:"+addr[-4:-2]+":"+addr[-2:]
+    if mac not in stateuuids:
+        stateuuids[mac] = str(uuid.uuid1())
+    if mac not in poweruuids:
+        poweruuids[mac] = str(uuid.uuid1())
+    if mac not in voltageuuids:
+        voltageuuids[mac] = str(uuid.uuid1())
+    if mac not in currentuuids:
+        currentuuids[mac] = str(uuid.uuid1())
+    if mac not in paths:
+        paths[mac] = "/plugstrip/strip"+str(len(paths))
     streams['stateuuids'] = stateuuids
     streams['poweruuids'] = poweruuids
     streams['voltageuuids'] = voltageuuids
@@ -69,15 +70,14 @@ while True:
     state = float(res['state'])
     voltage = float(res['voltage'])
     power = float(res['power'])
-    path = paths[addr]
-    mac = "00:12:6d:02:"+addr[-4:-2]+":"+addr[-2:]
+    path = paths[mac]
     print addr, mac, uuid.uuid3(namespace, mac)
     payload["Metadata"]["Plugstrip"] = str(uuid.uuid3(namespace, mac))
     payload["Metadata"]["Address"] = addr
     payload["Metadata"]["Port"] = 5555
     message = {}
     message[path+'/state'] = copy.deepcopy(payload)
-    message[path+'/state']["uuid"] = stateuuids[addr]
+    message[path+'/state']["uuid"] = stateuuids[mac]
     message[path+'/state']["Readings"] = [[int(time.time()), state]]
     message[path+'/state']["Properties"]["UnitofMeasure"] = "On/Off"
     message[path+'/state']["Metadata"]["Point"] = {}
@@ -85,7 +85,7 @@ while True:
     message[path+'/state']["Metadata"]["Point"]["Measure"] = "State"
 
     message[path+'/power'] = copy.deepcopy(payload)
-    message[path+'/power']["uuid"] = poweruuids[addr]
+    message[path+'/power']["uuid"] = poweruuids[mac]
     message[path+'/power']["Readings"] = [[int(time.time()), power]]
     message[path+'/power']["Properties"]["UnitofMeasure"] = "W"
     message[path+'/power']["Metadata"]["Point"] = {}
@@ -93,7 +93,7 @@ while True:
     message[path+'/power']["Metadata"]["Point"]["Measure"] = "Power"
 
     message[path+'/voltage'] = copy.deepcopy(payload)
-    message[path+'/voltage']["uuid"] = voltageuuids[addr]
+    message[path+'/voltage']["uuid"] = voltageuuids[mac]
     message[path+'/voltage']["Readings"] = [[int(time.time()), voltage]]
     message[path+'/voltage']["Properties"]["UnitofMeasure"] = "V"
     message[path+'/voltage']["Metadata"]["Point"] = {}
@@ -101,7 +101,7 @@ while True:
     message[path+'/voltage']["Metadata"]["Point"]["Measure"] = "Voltage"
 
     message[path+'/current'] = copy.deepcopy(payload)
-    message[path+'/current']["uuid"] = currentuuids[addr]
+    message[path+'/current']["uuid"] = currentuuids[mac]
     message[path+'/current']["Readings"] = [[int(time.time()), current]]
     message[path+'/current']["Properties"]["UnitofMeasure"] = "A"
     message[path+'/current']["Metadata"]["Point"] = {}
