@@ -52,7 +52,7 @@ def actuateAndReschedule(addr, port, turn_on):
 def generatePermalink(uuid):
     request_params = {
         "autoupdate": True,
-        "axes": [{ "axisname": "Power Consumption (W)", "streams": [uuid], "scale": [0,5], "rightside": False }],
+        "axes": [{ "axisname": "Power Consumption (W)", "streams": [uuid], "scale": [0,15], "rightside": False }],
         "streams": [{ "stream": uuid, "color": "#0000FF" }],
         "window_type": "now",
         "window_width": 60 * 60 * 10e9, # One Hour in Nanoseconds
@@ -112,12 +112,12 @@ def writeActuationSchedule():
 
 @app.route('/')
 def homePage():
-    plug_data = issueSmapRequest('select * where Metadata/Type="plugstrip" and Path like "power$"')
-    plugs = [ {"name": x["Metadata"]["Name"], "location": x["Metadata"]["Location"],
-               "owner": x["Metadata"]["Owner"], "uuid": x["uuid"]} for x in plug_data ]
-    uuid_to_names = { x["uuid"]: x["Metadata"]["Name"] for x in plug_data }
+    plug_data = issueSmapRequest('select * where Metadata/Type="plugstrip" and has Metadata/Owner and Path like "power$"')
+    plugs = [ {"name": x["Metadata"]["Device"]["Type"], "location": "{}, {}".format(x["Metadata"]["Location"]["Room"],
+                x["Metadata"]["Location"]["Building"]), "owner": x["Metadata"]["Owner"], "uuid": x["uuid"]} for x in plug_data ]
+    uuid_to_names = { x["uuid"]: x["Metadata"]["Device"]["Type"] for x in plug_data }
 
-    hour_data = issueSmapRequest('select data in (now-1hour, now) where Metadata/Type="plugstrip" and Path like "power$"')
+    hour_data = issueSmapRequest('select data in (now-1hour, now) where Metadata/Type="plugstrip" and has Metadata/Owner and Path like "power$"')
     if len(hour_data) == 0:
         max_hour_total = "No data found for last hour"
         max_hour_peak = "No data found for last hour"
@@ -125,7 +125,7 @@ def homePage():
         max_hour_total = "{}: {} W".format(*getMaxTotal(hour_data, uuid_to_names))
         max_hour_peak = "{}: {} W".format(*getMaxPeak(hour_data, uuid_to_names))
 
-    day_data = issueSmapRequest('select data in (now-1day, now) where Metadata/Type="plugstrip" and Path like "power$"')
+    day_data = issueSmapRequest('select data in (now-1day, now) where Metadata/Type="plugstrip" and has Metadata/Owner and Path like "power$"')
     if len(day_data) == 0:
         max_day_total = "No data found for last day"
         max_day_peak = "No data found for last day"
@@ -133,7 +133,7 @@ def homePage():
         max_day_total = "{}: {} W".format(*getMaxTotal(day_data, uuid_to_names))
         max_day_peak = "{}: {} W".format(*getMaxPeak(day_data, uuid_to_names))
 
-    week_data =  issueSmapRequest('select data in (now-7days, now) where Metadata/Type="plugstrip" and Path like "power$"')
+    week_data =  issueSmapRequest('select data in (now-7days, now) where Metadata/Type="plugstrip" and has Metadata/Owner and Path like "power$"')
     if len(week_data) == 0:
         max_week_total = "No data found for last week"
         max_week_peak = "No data found for last week"
@@ -154,11 +154,12 @@ def homePage():
 
 @app.route('/plugstrips/<uuid>', methods=['GET'])
 def plugPage(uuid):
-    plug_info = issueSmapRequest('select * where uuid="{}" and Path like "power$"'.format(uuid))
+    plug_info = issueSmapRequest('select * where uuid="{}" and has Metadata/Owner and Path like "power$"'.format(uuid))
     if len(plug_info) == 0:
         return "UUID does not match a known plugstrip", 404
-    name = plug_info[0]["Metadata"]["Name"]
-    location = plug_info[0]["Metadata"]["Location"]
+    name = plug_info[0]["Metadata"]["Device"]["Type"]
+    location = "{}, {}".format(plug_info[0]["Metadata"]["Location"]["Room"],
+                               plug_info[0]["Metadata"]["Location"]["Building"])
     owner = plug_info[0]["Metadata"]["Owner"]
     addr = plug_info[0]["Metadata"]["Address"]
     port = int(plug_info[0]["Metadata"]["Port"])
@@ -215,7 +216,7 @@ def plugPage(uuid):
 
 @app.route('/plugstrips/<uuid>', methods=['POST'])
 def handleActuation(uuid):
-    plug_info = issueSmapRequest('select Metadata/Address, Metadata/Port where uuid="{}"'.format(uuid))
+    plug_info = issueSmapRequest('select Metadata/Address, Metadata/Port where uuid="{}" and has Metadata/Owner'.format(uuid))
     if len(plug_info) == 0:
         return "UUID does not correspond to known plugstrip", 404
     addr = plug_info[0]["Metadata"]["Address"]
@@ -232,7 +233,7 @@ def handleActuation(uuid):
 
 @app.route('/plugstrips/<uuid>/schedule', methods=['POST'])
 def addActuationEvent(uuid):
-    plug_info = issueSmapRequest('select Metadata/Address, Metadata/Port where uuid="{}"'.format(uuid))
+    plug_info = issueSmapRequest('select Metadata/Address, Metadata/Port where uuid="{}" and has Metadata/Owner'.format(uuid))
     if len(plug_info) == 0:
         return 404
     addr = plug_info[0]["Metadata"]["Address"]
@@ -246,7 +247,7 @@ def addActuationEvent(uuid):
 
 @app.route('/plugstrips/<uuid>/schedule', methods=['DELETE'])
 def removeActuationEvent(uuid):
-    plug_info = issueSmapRequest('select Metadata/Address, Metadata/Port where uuid="{}"'.format(uuid))
+    plug_info = issueSmapRequest('select Metadata/Address, Metadata/Port where uuid="{}" and has Metadata/Owner'.format(uuid))
     if len(plug_info) == 0:
         return "UUID does not correspond to known plugstrip", 404
     addr = plug_info[0]["Metadata"]["Address"]
