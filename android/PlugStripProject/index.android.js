@@ -307,6 +307,7 @@ var BLEPlug = React.createClass({
     }
 });
 
+//TODO: when load, try to retrieve previous state
 var PlugConfigure = React.createClass({
     getInitialState: function() {
         return {'buildings': [],
@@ -314,6 +315,59 @@ var PlugConfigure = React.createClass({
                 'rooms': ['waiting...'],
                 'owners': ['waiting...'],
                }
+    },
+    componentDidMount: function() {
+        //var self = this;
+        //util.QuerySmap("select distinct Metadata/Location/Building where Metadata/Plugstrip='"+this.props.devUUID+"';",
+        //    function(data) {
+        //        var bldgs = self.state.buildings;
+        //        if (data.length > 0) {
+        //            bldgs = util.PopOrAddToFront(bldgs, data[0]);
+        //            self.setState({'buildings': bldgs});
+        //        }
+        //    },
+        //    function(err) {console.log("errbldg", err);}
+        //);
+        //util.QuerySmap("select distinct Metadata/Location/Floor where Metadata/Plugstrip='"+this.props.devUUID+"';",
+        //    function(data) {
+        //        var floors = self.state.floors;
+        //        if (data.length > 0) {
+        //            floors = util.PopOrAddToFront(floors, data[0]);
+        //            self.setState({'floors': floors});
+        //        }
+        //    },
+        //    function(err) {}
+        //);
+        //util.QuerySmap("select distinct Metadata/Location/Room where Metadata/Plugstrip='"+this.props.devUUID+"';",
+        //    function(data) {
+        //        var rooms = self.state.rooms;
+        //        if (data.length > 0) {
+        //            rooms = util.PopOrAddToFront(rooms, data[0]);
+        //            self.setState({'rooms': rooms});
+        //        }
+        //    },
+        //    function(err) {}
+        //);
+        //util.QuerySmap("select distinct Metadata/Owner where Metadata/Plugstrip='"+this.props.devUUID+"';",
+        //    function(data) {
+        //        var owners = self.state.owners;
+        //        if (data.length > 0) {
+        //            owners = util.PopOrAddToFront(owners, data[0]);
+        //            self.setState({'owners': owners});
+        //        }
+        //    },
+        //    function(err) {}
+        //);
+        //util.QuerySmap("select distinct Metadata/Device/Type where Metadata/Plugstrip='"+this.props.devUUID+"';",
+        //    function(data) {
+        //        var devices = self.state.devices;
+        //        if (data.length > 0) {
+        //            devices = util.PopOrAddToFront(devices, data[0]);
+        //            self.setState({'devices': devices});
+        //        }
+        //    },
+        //    function(err) {}
+        //);
     },
     getBuildings: function() {
         var self = this;
@@ -335,7 +389,7 @@ var PlugConfigure = React.createClass({
     },
     getFloors: function() {
         var self = this;
-        util.QuerySmap("select distinct Metadata/Location/Floor where Metadata/Location/Buildings='"+this.state.building+"';",
+        util.QuerySmap("select distinct Metadata/Location/Floor where Metadata/Location/Building='"+this.state.building+"';",
             function(data) {
                 console.log("FLOORS", data);
                 if (data.length == 0) {
@@ -351,7 +405,7 @@ var PlugConfigure = React.createClass({
     },
     getRooms: function() {
         var self = this;
-        util.QuerySmap("select distinct Metadata/Location/Room where Metadata/Location/Floor='"+this.state.floor+"' and Metadata/Location/Buildings='"+this.state.building+"';",
+        util.QuerySmap("select distinct Metadata/Location/Room where Metadata/Location/Floor='"+this.state.floor+"' and Metadata/Location/Building='"+this.state.building+"';",
             function(data) {
                 console.log("ROOMS", data);
                 if (data.length == 0) {
@@ -399,8 +453,35 @@ var PlugConfigure = React.createClass({
     },
     doConfigure: function() {
         // pack up the stuff into a real sMAP object
-        // TODO: how do we discover the UUID?
-        ToastAndroid.show(this.props.devUUID, ToastAndroid.SHORT);
+        // if the config is empty, we error, notify and do nothing
+        if (this.props.devUUID == null || 
+            this.state.building == null ||
+            this.state.floor == null ||
+            this.state.room == null ||
+            this.state.owner == null ||
+            this.state.device == null) {
+            ToastAndroid.show("Please complete configuration!", ToastAndroid.SHORT);
+            return
+        } else if (this.props.devUUID == "") {
+            ToastAndroid.show("No UUID for device. Not a plug strip!", ToastAndroid.SHORT);
+            return
+        }
+        var setCommand = "set ";
+        setCommand += 'Metadata/Location/Building="'+this.state.building+'", ';
+        setCommand += 'Metadata/Location/Floor="'+this.state.floor+'", ';
+        setCommand += 'Metadata/Location/Room="'+this.state.room+'", ';
+        setCommand += 'Metadata/Owner="'+this.state.owner+'", ';
+        setCommand += 'Metadata/Device/Type="'+this.state.device+'" ';
+        setCommand += 'where Metadata/Plugstrip="'+this.props.devUUID+'";';
+        console.log(setCommand);
+        util.QuerySmap(setCommand,
+            function(d) {
+                ToastAndroid.show("successful!"+d, ToastAndroid.SHORT);
+            },
+            function(err) {
+                ToastAndroid.show(err, ToastAndroid.SHORT);
+                console.err(err);
+            });
     },
     componentWillMount: function() {
         this.getBuildings();
@@ -516,8 +597,8 @@ var PlugConfigure = React.createClass({
                         />
                     </View>
                 </View>
-                <View style={{ marginBottom: 20, margin: 20, height: 60 }} >
-                    <TouchableHighlight>
+                <View style={{ marginBottom: 20, margin: 20, height: 60, backgroundColor: "#0ebfe9"}} >
+                    <TouchableHighlight onPress={this.doConfigure} style={{ backgroundColor: "#0ebfe9", height: 60, flex: 1, justifyContent: 'center'}} >
                         <Text style={{fontSize: 24, textAlign: 'center'}}>Configure!</Text>
                     </TouchableHighlight>
                 </View>

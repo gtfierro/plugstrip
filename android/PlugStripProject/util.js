@@ -18,10 +18,21 @@ util.QuerySmap = function(query, success, error) {
             error(request);
         }
     };
-    request.open('POST', 'http://shell.storm.pm:8079/api/query', true);
+    request.open('POST', 'http://plugstrip.cal-sdb.org:8079/api/query', true);
     request.setRequestHeader("Content-type", "application/text");
     request.setRequestHeader("Accept", "application/json");
     request.send(query);
+}
+
+// if val is in array, puts it to the front, otherwise adds it to the front
+util.PopOrAddToFront = function(arr, val) {
+    if (arr.indexOf(val) == -1) {
+        arr.unshift(val);
+    } else {
+        arr.splice(arr.indexOf(val), 1);
+        arr.unshift(val);
+    }
+    return val;
 }
 
 module.exports = util;
