@@ -24,6 +24,7 @@
 <div class='container-fluid'>
     <h1>{{ name }}: {{ location }}</h2>
     <h3>Owned By: {{ owner }}</h3>
+    <h3>Current State: <span id='plugState'><strong>{{ state }}</strong></span></h3>
     <div class='row'>
         <div class='col-xs-4'>
             <a class='btn btn-info' href='{{ plot_url }}' id='bViewPlot' role='button'>View Plot of Data</a>

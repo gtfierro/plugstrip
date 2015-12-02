@@ -6,6 +6,15 @@ $(document).ready(function() {
     $('#bCancel').hide()
     $('.deleteCell').hide()
 
+    var plugState = $('#plugState').text()
+    if (plugState === "Off") {
+        $('#plugState').css('color', 'red')
+    } else if (plugState === "On") {
+        $('#plugState').css('color', 'green')
+    } else {
+        $('#plugstate').css('color', 'gray')
+    }
+
     $('#bTurnOn').click(function() {
         $.ajax({data: "1", contentType: "text/plain", type: "POST"})
     })

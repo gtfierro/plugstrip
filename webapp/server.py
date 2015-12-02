@@ -166,13 +166,22 @@ def plugPage(uuid):
     owner = plug_info[0]["Metadata"]["Owner"]
     addr = plug_info[0]["Metadata"]["Address"]
     port = int(plug_info[0]["Metadata"]["Port"])
+    plugstrip_id = plug_info[0]["Metadata"]["Plugstrip"]
+    plug_state = issueSmapRequest('select data before now where Metadata/Plugstrip="{}" and has Metadata/Owner and Path like "state$"'.format(plugstrip_id))
+    if len(plug_state) == 0:
+        state = "Unknown"
+    else:
+        if plug_state[0]["Readings"][0][1] == 0:
+            state = "Off"
+        else:
+            state = "On"
 
     with actuation_tasks_lock:
         schedule = [ {"hour": ev_hour, "minute": ev_minute, "turn_on": ev_turn_on}
                      for (ev_addr, ev_port, ev_hour, ev_minute, ev_turn_on) in actuation_tasks
                      if ev_addr == addr and ev_port == port ]
 
-    hour_data = issueSmapRequest( 'select data in (now-1hour, now) where uuid="{}"'.format(uuid))
+    hour_data = issueSmapRequest('select data in (now-1hour, now) where uuid="{}"'.format(uuid))
     if len(hour_data) == 0:
         hour_total = "No data found for last hour"
         hour_peak = "No data found for last hour"
@@ -225,7 +234,8 @@ def plugPage(uuid):
         "day_peak": day_peak,
         "week_peak": week_peak,
         "plot_url": "{}/?{}".format(PLOTTER_ADDR, permalink_code),
-        "schedule": schedule
+        "schedule": schedule,
+        "state": state
     }
     return render_template("plugstrip.html", **template_args)
 
