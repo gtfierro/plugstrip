@@ -22,18 +22,17 @@
 <body>
 <input type="hidden" id="uuid" value="{{ uuid }}">
 <div class='container-fluid'>
-    <h1>{{ name }}: {{ location }}</h2>
-    <h3>Owned By: {{ owner }}</h3>
-    <h3>Current State: <span id='plugState'><strong>{{ state }}</strong></span></h3>
+    <h1>{{ name }}: {{ location }}</h1>
     <div class='row'>
         <div class='col-xs-4'>
-            <a class='btn btn-info' href='{{ plot_url }}' id='bViewPlot' role='button'>View Plot of Data</a>
+            <h3>Owned By: {{ owner }}</h3>
         </div>
         <div class='col-xs-4'>
-            <button type='button' class='btn btn-success' id='bTurnOn'>Turn Plug On</button>
+            <h3>Current State: <span id='plugState'><strong>{{ state }}</strong></span></h3>
         </div>
         <div class='col-xs-4'>
-            <button type='button' class='btn btn-danger' id='bTurnOff'>Turn Plug Off</button>
+            <button type='button' class='btn btn-lg btn-success' id='bTurnOn'>Turn Plug On</button>
+            <button type='button' class='btn btn-lg btn-danger' id='bTurnOff'>Turn Plug Off</button>
         </div>
     </div>
 
@@ -43,22 +42,31 @@
         <tr>
             <td><strong>Energy Consumed in Last Hour</strong></td>
             <td>{{ hour_total }}</td>
-        </tr>
-        <tr>
-            <td><strong>Energy Consumed in Last Day<strong></td>
-            <td>{{ day_total }}</td>
-        </tr>
-        <tr>
-            <td><strong>Energy Consumed in Last Week</strong></td>
-            <td>{{ week_total }}</td>
+            <td rowspan='2' class='vertCenter col-xrs-3'>
+                <a class='btn btn-info btn-block' href='{{ hour_plot_url }}' id='bViewHourPlot' role='button'>View Plot of Last Hour</a>
+            </td>
         </tr>
         <tr>
             <td><strong>Peak Energy Draw in Last Hour</strong></td>
             <td>{{ hour_peak }}</td>
         </tr>
         <tr>
+            <td><strong>Energy Consumed in Last Day<strong></td>
+            <td>{{ day_total }}</td>
+            <td rowspan='2' class='vertCenter col-xs-3'>
+                <a class='btn btn-info btn-block' href='{{ day_plot_url }}' id='bViewDayPlot' role='button'>View Plot of Last Day</a>
+            </td>
+        </tr>
+        <tr>
             <td><strong>Peak Energy Draw in Last Day</strong></td>
             <td>{{ day_peak }}</td>
+        </tr>
+        <tr>
+            <td><strong>Energy Consumed in Last Week</strong></td>
+            <td>{{ week_total }}</td>
+            <td rowspan='2' class='vertCenter col-xs-3'>
+                <a class='btn btn-info btn-block' href='{{ week_plot_url }}' id='bViewWeekPlot' role='button'>View Plot of Last Week</a>
+            </td>
         </tr>
         <tr>
             <td><strong>Peak Energy Draw in Last Week</strong></td>

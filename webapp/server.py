@@ -12,8 +12,8 @@ import requests
 import socket
 import threading
 
-GILES_QUERY_ADDR = "http://54.84.37.77:8079/api/query"
-PLOTTER_ADDR = "http://54.84.37.77:3000"
+GILES_QUERY_ADDR = "http://plugstrip.cal-sdb.org:8079/api/query"
+PLOTTER_ADDR = "http://plugstrip.cal-sdb.org:3000"
 app = Flask(__name__)
 actuation_tasks = set([])
 running_timers = {}
@@ -36,7 +36,7 @@ def getMaxTotal(plug_streams, uuid_to_names):
     reading_values = [ (x["uuid"], [ y[1] for y in x["Readings"] ]) for x in plug_streams ]
     totals = [ (uuid, sum(readings)) for (uuid, readings) in reading_values if len(readings) > 0]
     if len(totals) == 0:
-        return ("No Plug Data  Found", 0)
+        return ("No Plug Data Found", 0)
     max_uuid, max_val = max(totals, key=lambda x: x[1])
     return (uuid_to_names[max_uuid], max_val)
 
@@ -53,18 +53,44 @@ def actuateAndReschedule(addr, port, turn_on):
     timer.start()
     actuatePlug(addr, port, turn_on)
 
-def generatePermalink(uuid):
-    request_params = {
+def generatePermalinks(uuid):
+    hour_plot_request_params = {
         "autoupdate": True,
         "streams": [{ "stream": uuid, "color": "#0000FF" }],
         "window_type": "now",
-        "window_width": 60 * 60 * 10e9, # One Hour in Nanoseconds
+        "window_width": 60 * 60 * 1e9, # One Hour in Nanoseconds
         "tz": "America/Los_Angeles"
     }
-
-    r = requests.post(PLOTTER_ADDR + "/s3ui_permalink", data={"permalink_data": json.dumps(request_params)})
+    r = requests.post(PLOTTER_ADDR + "/s3ui_permalink",
+            data={"permalink_data": json.dumps(hour_plot_request_params)})
     r.raise_for_status()
-    return r.text
+    hour_plot_link = r.text
+
+    day_plot_request_params = {
+        "autoupdate": True,
+        "streams": [{ "stream": uuid, "color": "#0000FF" }],
+        "window_type": "now",
+        "window_width": 24 * 60 * 60 * 1e9, # One Day in Nanoseconds
+        "tz": "America/Los_Angeles"
+    }
+    r = requests.post(PLOTTER_ADDR + "/s3ui_permalink",
+            data={"permalink_data": json.dumps(day_plot_request_params)})
+    r.raise_for_status()
+    day_plot_link = r.text
+
+    week_plot_request_params = {
+        "autoupdate": True,
+        "streams": [{ "stream": uuid, "color": "#0000FF" }],
+        "window_type": "now",
+        "window_width": 7 * 24 * 60 * 60 * 1e9, # One Week in Nanoseconds
+        "tz": "America/Los_Angeles"
+    }
+    r = requests.post(PLOTTER_ADDR + "/s3ui_permalink",
+            data={"permalink_data": json.dumps(week_plot_request_params)})
+    r.raise_for_status()
+    week_plot_link = r.text
+
+    return hour_plot_link, day_plot_link, week_plot_link
 
 def launchActuationCycle(addr, port, hour, minute, turn_on):
     global actuation_tasks
@@ -220,7 +246,7 @@ def plugPage(uuid):
             week_total = "{} W".format(sum(week_reading_values))
             week_peak = "{} W".format(max(week_reading_values))
 
-    permalink_code = generatePermalink(uuid)
+    hour_plot_id, day_plot_id, week_plot_id = generatePermalinks(uuid)
 
     template_args = {
         "name": name,
@@ -233,7 +259,9 @@ def plugPage(uuid):
         "hour_peak": hour_peak,
         "day_peak": day_peak,
         "week_peak": week_peak,
-        "plot_url": "{}/?{}".format(PLOTTER_ADDR, permalink_code),
+        "hour_plot_url": "{}/?{}".format(PLOTTER_ADDR, hour_plot_id),
+        "day_plot_url": "{}/?{}".format(PLOTTER_ADDR, day_plot_id),
+        "week_plot_url": "{}/?{}".format(PLOTTER_ADDR, week_plot_id),
         "schedule": schedule,
         "state": state
     }

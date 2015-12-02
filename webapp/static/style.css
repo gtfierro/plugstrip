@@ -13,3 +13,11 @@ h2 {
     margin-top: 35px;
     margin-bottom: 10px;
 }
+
+.vertCenter {
+    vertical-align: middle !important;
+}
+
+#bTurnOn, #bTurnOff {
+    margin-top: 10px;
+}

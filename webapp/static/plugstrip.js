@@ -9,18 +9,34 @@ $(document).ready(function() {
     var plugState = $('#plugState').text()
     if (plugState === "Off") {
         $('#plugState').css('color', 'red')
+        $('#bTurnOff').hide()
     } else if (plugState === "On") {
         $('#plugState').css('color', 'green')
+        $('#bTurnOn').hide()
     } else {
         $('#plugstate').css('color', 'gray')
     }
 
     $('#bTurnOn').click(function() {
-        $.ajax({data: "1", contentType: "text/plain", type: "POST"})
+        $.ajax({data: "1", contentType: "text/plain", type: "POST"}).done(
+            function(data, text, jqXHR) {
+                if (jqXHR.status === 201) {
+                    $('#bTurnOn').hide()
+                    $('#bTurnOff').show()
+                }
+            }
+        )
     })
 
     $('#bTurnOff').click(function() {
-        $.ajax({data: "0", contentType: "text/plain", type: "POST"})
+        $.ajax({data: "0", contentType: "text/plain", type: "POST"}).done(
+            function(data, text, jqXHR) {
+                if (jqXHR.status === 201) {
+                    $('#bTurnOff').hide()
+                    $('#bTurnOn').show()
+                }
+            }
+        )
     })
 
     $('#bAddEvent').click(function() {
