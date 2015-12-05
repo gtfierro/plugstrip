@@ -7,8 +7,8 @@
 var Button = require('react-native-button');
 var React = require('react-native');
 var BLE =  require('./bleScan');
-var Form = require('react-native-form');
 var Dropdown = require('react-native-dropdown-android');
+var WebIntent = require('react-native-webintent');
 var util = require('./util');
 
 var {
@@ -56,8 +56,8 @@ var PlugStripProject = React.createClass({
         return false;
     })
   },
-  schedulePress: function() {
-    ToastAndroid.show("Pressed schedule", ToastAndroid.SHORT);
+  energyPress: function() {
+    WebIntent.open('http://plugstrip.cal-sdb.org/');
   },
   scanPress: function() {
     var self =  this;
@@ -74,31 +74,6 @@ var PlugStripProject = React.createClass({
             _screen: 'scan',
         });
     });
-  },
-  runSmapQuery: function() {
-    ToastAndroid.show("Starting Query", ToastAndroid.SHORT);
-    console.log("test");
-    var request = new XMLHttpRequest();
-    request.onreadystatechange = (e) => {
-        if (request.readyState !== 4) {
-            return;
-        }
-
-        if (request.status == 200) {
-            console.log(request.responseText);
-            this.setState({
-                dataSource: this.state.dataSource.cloneWithRows(JSON.parse(request.responseText)),
-                _screen: 'query',
-            });
-        } else {
-            console.warn('error');
-            console.log(request);
-        }
-    };
-    request.open('POST', 'http://shell.storm.pm:8079/api/query', true);
-    request.setRequestHeader("Content-type", "application/text");
-    request.setRequestHeader("Accept", "application/json");
-    request.send("select distinct Metadata/SourceName;");
   },
   renderSmapRow: function(row) {
     return (
@@ -136,10 +111,14 @@ var PlugStripProject = React.createClass({
     var page = (<View />);
 
     var menuPage = (
-        <View style={styles.menuContainer}>
-            <MenuItem text="Scan for Plug Strips" label="Scan" onPress={this.scanPress} />
-            <MenuItem text="Schedule Plug Strip" label="Schedule" onPress={this.schedulePress} />
-            <MenuItem text="Sample sMAP query" label="Query" onPress={this.runSmapQuery} />
+        <View>
+          <Text style={{textAlign: 'center', paddingBottom: 30}}>
+          Welcome to the plugstrip app
+          </Text>
+          <View style={styles.menuContainer}>
+              <MenuItem text="Scan for Plug Strips" label="Scan" onPress={this.scanPress} />
+              <MenuItem text="View Energy Usage" label="Energy" onPress={this.energyPress} />
+          </View>
         </View>
     );
 
@@ -208,11 +187,12 @@ var PlugStripProject = React.createClass({
 var MenuItem = React.createClass({
     render: function() {
         return (
-            <View style={styles.menuItem}>
-                <Text style={{textAlign: 'center', paddingLeft: 50}}>{this.props.text}</Text>
-                <View style={styles.button}>
-                    <Button onPress={this.props.onPress}>{this.props.label}</Button>
+            <View style={{paddingBottom: 20}}>
+              <TouchableHighlight style={{marginLeft: 20, marginRight: 20}} onPress={this.props.onPress}>
+                <View style={styles.menuItem}>
+                  <Text style={{fontSize: 20}}>{this.props.text}</Text>
                 </View>
+              </TouchableHighlight>
             </View>
         )
     }
@@ -255,6 +235,9 @@ var BLEDevice = React.createClass({
         var uuid = "0000b00d-0000-1000-8000-00805f9b34fb";
         BLE.setState(state, uuid);
     },
+    gotoSchedule: function() {
+        WebIntent.open('http://plugstrip.cal-sdb.org/plugstrips/'+this.state.devUUID);
+    },
     render: function() {
         var rows = [];
         for (var key in this.state.plugs) {
@@ -270,6 +253,9 @@ var BLEDevice = React.createClass({
                 <View style={{marginBottom: 30, padding: 20}}>
                     <TouchableHighlight onPress={this.props.configure.bind(null, this.state.devUUID)}>
                         <Text style={{fontSize: 20, padding:20, textAlign: 'center'}}>Configure</Text>
+                    </TouchableHighlight>
+                    <TouchableHighlight onPress={this.gotoSchedule}>
+                        <Text style={{fontSize: 20, padding:20, textAlign: 'center'}}>Schedule</Text>
                     </TouchableHighlight>
                 </View>
             </View>
@@ -629,13 +615,13 @@ var styles = StyleSheet.create({
   },
   menuItem: {
     flex: 1,
-    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     borderStyle: 'solid',
     borderColor: '#000',
-    paddingTop: 10,
-    paddingBottom: 10,
+    backgroundColor: '#2ecc71',
+    padding: 10,
+    borderRadius: 5,
   },
   bleHeader: {
     flex: 1,

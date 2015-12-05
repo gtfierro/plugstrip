@@ -9,6 +9,7 @@ import android.widget.Toast;
 import android.bluetooth.*;
 
 import com.chymtt.reactnativedropdown.DropdownPackage;
+import com.ivanph.webintent.RNWebIntentPackage;;
 
 import com.facebook.react.LifecycleState;
 import com.facebook.react.ReactInstanceManager;
@@ -37,6 +38,7 @@ public class MainActivity extends Activity implements DefaultHardwareBackBtnHand
                 .addPackage(new BLEScanPackage(this))
                 .addPackage(new MainReactPackage())
                 .addPackage(new DropdownPackage())
+                .addPackage(new RNWebIntentPackage())
                 .setUseDeveloperSupport(BuildConfig.DEBUG)
                 .setInitialLifecycleState(LifecycleState.RESUMED)
                 .build();
