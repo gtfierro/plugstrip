@@ -9,6 +9,7 @@ var React = require('react-native');
 var BLE =  require('./bleScan');
 var Dropdown = require('react-native-dropdown-android');
 var WebIntent = require('react-native-webintent');
+var ProgressHUD = require('react-native-progress-hud');
 var util = require('./util');
 
 var {
@@ -29,8 +30,10 @@ var {
 var connected_macaddr = null;
 
 var PlugStripProject = React.createClass({
+  mixins: [ProgressHUD.Mixin],
   getInitialState: function() {
     return {
+        scanning: false,
         _screen: 'menu',
         dataSource: new ListView.DataSource({
             rowHasChanged: (row1, row2) => row1 !== row2,
@@ -61,18 +64,27 @@ var PlugStripProject = React.createClass({
   },
   scanPress: function() {
     var self =  this;
+    this.setState({scanning: true});
+    this.showProgressHUD();
     BLE.scan(function(res) {
         console.log("results", res);
-        ToastAndroid.show("returned from scan", ToastAndroid.SHORT);
+        self.setState({scanning: false});
+        self.dismissProgressHUD();
         var results = {};
         for (var i=0;i<res.length;i++) {
             var o = res[i];
             results[o.macaddr] = o;
         }
-        self.setState({
-            dataSourceBLE: self.state.dataSourceBLE.cloneWithRows(results),
-            _screen: 'scan',
-        });
+        if (Object.keys(results).length == 0) { // no results
+            ToastAndroid.show("No BLE devices found!", ToastAndroid.SHORT);
+            self.setState({_screen: 'menu'});
+            return
+        } else {
+            self.setState({
+                dataSourceBLE: self.state.dataSourceBLE.cloneWithRows(results),
+                _screen: 'scan',
+            });
+        }
     });
   },
   renderSmapRow: function(row) {
@@ -119,6 +131,11 @@ var PlugStripProject = React.createClass({
               <MenuItem text="Scan for Plug Strips" label="Scan" onPress={this.scanPress} />
               <MenuItem text="View Energy Usage" label="Energy" onPress={this.energyPress} />
           </View>
+          <ProgressHUD
+            isVisible={this.state.scanning}
+            isDismissible={true}
+            overlayColor="rgba(0, 0, 0, 0)"
+          />
         </View>
     );
 

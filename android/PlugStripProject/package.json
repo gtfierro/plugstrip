@@ -11,6 +11,7 @@
     "react-native-button": "^1.2.1",
     "react-native-dropdown-android": "0.0.4",
     "react-native-form": "^0.1.6",
+    "react-native-progress-hud": "^1.0.3",
     "react-native-webintent": "^1.0.3",
     "react-tap-event-plugin": "^0.2.1"
   }
