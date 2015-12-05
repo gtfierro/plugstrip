@@ -77,7 +77,6 @@ var PlugStripProject = React.createClass({
         }
         if (Object.keys(results).length == 0) { // no results
             ToastAndroid.show("No BLE devices found!", ToastAndroid.SHORT);
-            self.setState({_screen: 'menu'});
             return
         } else {
             self.setState({
