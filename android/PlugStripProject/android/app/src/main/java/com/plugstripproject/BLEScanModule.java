@@ -205,6 +205,12 @@ public class BLEScanModule extends ReactContextBaseJavaModule {
                 found.putString("nodemac", UUID.nameUUIDFromBytes(dev.getAddress().getBytes()).toString());
                 callback.invoke(found);
             }
+            @Override
+            public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic plug, int status) {
+                if (status != BluetoothGatt.GATT_SUCCESS) {
+                    mBluetoothGatt.writeCharacteristic(plugdefault);
+                }
+            }
           };
 
 

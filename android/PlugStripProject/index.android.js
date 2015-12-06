@@ -73,7 +73,9 @@ var PlugStripProject = React.createClass({
         var results = {};
         for (var i=0;i<res.length;i++) {
             var o = res[i];
-            results[o.macaddr] = o;
+            if (o.name == "Firestorm") {
+                results[o.macaddr] = o;
+            }
         }
         if (Object.keys(results).length == 0) { // no results
             ToastAndroid.show("No BLE devices found!", ToastAndroid.SHORT);
