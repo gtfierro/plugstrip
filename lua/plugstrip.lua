@@ -45,13 +45,13 @@ print("Bluetooth Enabled!")
 function reportdata(current_reg, voltage_reg)
     cord.new(function()
         -- Read from current ADC
-        --local current_arr = current_reg:r(0x0, 2)
-        --local current_val = current_arr:get_as(storm.array.INT16_BE, 0)
-        local current_val = 4
+        local current_arr = current_reg:r(0x0, 2)
+        local current_val = current_arr:get_as(storm.array.INT16_BE, 0)
 
         -- Read from voltage ADC
         local voltage_arr = voltage_reg:r(0x0, 2)
         local voltage_val = voltage_arr:get_as(storm.array.INT16_BE, 0)
+
         local power_val = current_val * voltage_val
         print("Current:", current_val)
         print("Voltage:", voltage_val)
@@ -71,7 +71,7 @@ cord.new(function()
 
     -- Initialize Current ADC in continuous mode
     local current_adc = Reg:new(storm.i2c.EXT, CURRENT_ADDR)
-    --current_adc:w(0x1, {0x04, 0x83})
+    current_adc:w(0x1, {0x04, 0x83})
 
     -- Initialize Voltage ADC in continuous mode
     local voltage_adc = Reg:new(storm.i2c.EXT, VOLTAGE_ADDR)
