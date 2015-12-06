@@ -184,8 +184,8 @@ def homePage():
 @app.route('/plugstrips/<uuid>', methods=['GET'])
 def plugPage(uuid):
     plug_info = issueSmapRequest('select * where uuid="{}" and has Metadata/Owner and Path like "power$"'.format(uuid))
-    if len(plug_info) == 0:
-        return "UUID does not match a known plugstrip", 404
+    if plug_info is None:
+        return "This plugstrip does not exist or has not yet reported data", 404
     name = plug_info[0]["Metadata"]["Device"]["Type"]
     location = "{}, {}".format(plug_info[0]["Metadata"]["Location"]["Room"],
                                plug_info[0]["Metadata"]["Location"]["Building"])
@@ -270,8 +270,8 @@ def plugPage(uuid):
 @app.route('/plugstrips/<uuid>', methods=['POST'])
 def handleActuation(uuid):
     plug_info = issueSmapRequest('select Metadata/Address, Metadata/Port where uuid="{}" and has Metadata/Owner'.format(uuid))
-    if len(plug_info) == 0:
-        return "UUID does not correspond to known plugstrip", 404
+    if plug_info is None:
+        return "This plugstrip does not exist or has not reported data and therefore cannot be scheduled", 404
     addr = plug_info[0]["Metadata"]["Address"]
     port = int(plug_info[0]["Metadata"]["Port"])
     body = request.data
@@ -287,8 +287,8 @@ def handleActuation(uuid):
 @app.route('/plugstrips/<uuid>/schedule', methods=['POST'])
 def addActuationEvent(uuid):
     plug_info = issueSmapRequest('select Metadata/Address, Metadata/Port where uuid="{}" and has Metadata/Owner'.format(uuid))
-    if len(plug_info) == 0:
-        return 404
+    if plug_info is None:
+        return "This plugstrip does not exist or has not reported data and therefore cannot be scheduled", 404
     addr = plug_info[0]["Metadata"]["Address"]
     port = int(plug_info[0]["Metadata"]["Port"])
     event = request.json
@@ -301,8 +301,8 @@ def addActuationEvent(uuid):
 @app.route('/plugstrips/<uuid>/schedule', methods=['DELETE'])
 def removeActuationEvent(uuid):
     plug_info = issueSmapRequest('select Metadata/Address, Metadata/Port where uuid="{}" and has Metadata/Owner'.format(uuid))
-    if len(plug_info) == 0:
-        return "UUID does not correspond to known plugstrip", 404
+    if plug_info is None:
+        return "This plugstrip does not exist or has not reported data and therefore cannot be scheduled", 404
     addr = plug_info[0]["Metadata"]["Address"]
     port = int(plug_info[0]["Metadata"]["Port"])
     event = request.json
@@ -311,7 +311,7 @@ def removeActuationEvent(uuid):
     if cancelActuationCycle(addr, port, event["hour"], event["minute"], event["turnOn"]):
         return "Event Deleted", 204
     else:
-        return "Event Does not Exist", 404
+        return "Scheduled Event Does not Exist", 404
 
 if __name__ == '__main__':
     if os.path.exists("actuation_tasks.json"):
