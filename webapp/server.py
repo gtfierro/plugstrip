@@ -271,7 +271,7 @@ def plugPage(uuid):
 def handleActuation(uuid):
     plug_info = issueSmapRequest('select Metadata/Address, Metadata/Port where uuid="{}" and has Metadata/Owner'.format(uuid))
     if plug_info is None:
-        return "This plugstrip does not exist or has not reported data and therefore cannot be scheduled", 404
+        return "This plugstrip does not exist or has not reported data and therefore cannot be actuated", 404
     addr = plug_info[0]["Metadata"]["Address"]
     port = int(plug_info[0]["Metadata"]["Port"])
     body = request.data
@@ -291,11 +291,26 @@ def addActuationEvent(uuid):
         return "This plugstrip does not exist or has not reported data and therefore cannot be scheduled", 404
     addr = plug_info[0]["Metadata"]["Address"]
     port = int(plug_info[0]["Metadata"]["Port"])
+
     event = request.json
     if "hour" not in event or "minute" not in event or "turnOn" not in event:
         return 'Actuation event requires "hour", "minute", and "turnOn" fields', 400
+    try:
+        hour_val = int(event["hour"])
+        if hour_val < 0 or hour_val > 23:
+            raise ValueError
+    except ValueError:
+        return '"hour" field must be number between 0 and 23', 400
+    try:
+        minute_val = int(event["minute"])
+        if minute_val < 0 or minute_val > 59:
+            raise ValueError
+    except ValueError:
+            return '"minute" field must be number between 0 and 59', 400
+    if type(event["turnOn"]) is not bool:
+        return '"turnOn" field must be a Boolean value', 400
 
-    launchActuationCycle(addr, port, int(event["hour"]), int(event["minute"]), event["turnOn"])
+    launchActuationCycle(addr, port, hour_val, minute_val, event["turnOn"])
     return "Event Added", 201
 
 @app.route('/plugstrips/<uuid>/schedule', methods=['DELETE'])
@@ -305,10 +320,26 @@ def removeActuationEvent(uuid):
         return "This plugstrip does not exist or has not reported data and therefore cannot be scheduled", 404
     addr = plug_info[0]["Metadata"]["Address"]
     port = int(plug_info[0]["Metadata"]["Port"])
+
     event = request.json
     if "hour" not in event or "minute" not in event or "turnOn" not in event:
-        return 'Actuation event requires "hour", "minute", and  "turnOn" fields', 400
-    if cancelActuationCycle(addr, port, event["hour"], event["minute"], event["turnOn"]):
+        return 'Actuation event requires "hour", "minute", and "turnOn" fields', 400
+    try:
+        hour_val = int(event["hour"])
+        if hour_val < 0 or hour_val > 23:
+            raise ValueError
+    except ValueError:
+        return '"hour" field must be number between 0 and 23', 400
+    try:
+        minute_val = int(event["minute"])
+        if minute_val < 0 or minute_val > 59:
+            raise ValueError
+    except ValueError:
+            return '"minute" field must be number between 0 and 59', 400
+    if type(event["turnOn"]) is not bool:
+        return '"turnOn" field must be a Boolean value', 400
+
+    if cancelActuationCycle(addr, port, hour_val, minute_val, event["turnOn"]):
         return "Event Deleted", 204
     else:
         return "Scheduled Event Does not Exist", 404
