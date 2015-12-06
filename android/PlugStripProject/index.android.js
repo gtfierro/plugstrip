@@ -105,9 +105,13 @@ var PlugStripProject = React.createClass({
   },
   renderBLERow: function(row) {
     console.log("row", row);
-    return (
-        <BLEDeviceRow device={row} connectDevice={this.connectDevice.bind(null, row)}/>
-    );
+    if (row != null && row.name == "Firestorm") {
+      return (
+          <BLEDeviceRow device={row} connectDevice={this.connectDevice.bind(null, row)}/>
+      );
+    } else {
+        return (<View></View>);
+    }
   },
   renderBLEHeader: function() {
     return (
@@ -494,9 +498,6 @@ var PlugConfigure = React.createClass({
             <View>
                 <Text style={{ fontSize: 24, textAlign: 'center' }}>
                 Configuring PlugStrip
-                </Text>
-                <Text style={{ fontSize: 22, textAlign: 'center' }}>
-                {this.props.devUUID}
                 </Text>
                 <View style={styles.formContainer}>
                     <View style={styles.formRow}>
