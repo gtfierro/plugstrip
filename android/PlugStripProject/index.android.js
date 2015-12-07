@@ -130,7 +130,10 @@ var PlugStripProject = React.createClass({
     var menuPage = (
         <View>
           <Text style={{textAlign: 'center', paddingBottom: 30}}>
-          Welcome to the plugstrip app
+          Welcome to the plugstrip app!
+          </Text>
+          <Text style={{textAlign: 'center', paddingBottom: 30}}>
+          Make sure to turn on Location in the phone settings
           </Text>
           <View style={styles.menuContainer}>
               <MenuItem text="Scan for Plug Strips" label="Scan" onPress={this.scanPress} />
@@ -462,7 +465,7 @@ var PlugConfigure = React.createClass({
     doConfigure: function() {
         // pack up the stuff into a real sMAP object
         // if the config is empty, we error, notify and do nothing
-        if (this.props.devUUID == null || 
+        if (this.props.devUUID == null ||
             this.state.building == null ||
             this.state.floor == null ||
             this.state.room == null ||
