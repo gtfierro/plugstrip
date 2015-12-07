@@ -48,7 +48,7 @@ var PlugStripProject = React.createClass({
   componentWillMount: function() {
     var self = this;
     BackAndroid.addEventListener('hardwareBackPress', function() {
-        if (self.state._screen == 'configure') {
+        if (self.state._screen == 'configure' || self.state._screen == 'viewconfig' ) {
             self.setState({macaddr: connected_macaddr, _screen: 'plugstrip'});
             return true;
         } else if (self.state._screen != 'menu') {
@@ -104,6 +104,9 @@ var PlugStripProject = React.createClass({
     this.setState({_screen: 'configure',
                    macaddr: macBLE,
                    devUUID: devUUID});
+  },
+  viewconfig: function(macBLE, devUUID) {
+    this.setState({_screen: 'viewconfig', macaddr: macBLE, devUUID: devUUID});
   },
   renderBLERow: function(row) {
     console.log("row", row);
@@ -164,12 +167,6 @@ var PlugStripProject = React.createClass({
         />
     );
 
-    var configurePage = (
-        <View>
-            <Text>configure</Text>
-        </View>
-    );
-
     switch (this.state._screen) {
     case 'query':
         page = queryPage;
@@ -178,10 +175,13 @@ var PlugStripProject = React.createClass({
         page = scanPage;
         break;
     case 'plugstrip':
-        page = <BLEDevice macaddr={this.state.macaddr} configure={this.configureDevice.bind(null, this.state.macaddr)} />
+        page = <BLEDevice macaddr={this.state.macaddr} configure={this.configureDevice.bind(null, this.state.macaddr)} viewconfig={this.viewconfig.bind(null, this.state.macaddr)}/>
         break;
     case 'configure':
         page = <PlugConfigure macaddr={connected_macaddr} devUUID={this.state.devUUID} />
+        break;
+    case 'viewconfig':
+        page = <ViewConfig macaddr={connected_macaddr} devUUID={this.state.devUUID} configure={this.configureDevice.bind(null, this.state.macaddr)}/>
         break;
     case 'menu':
     default:
@@ -276,6 +276,9 @@ var BLEDevice = React.createClass({
                     {rows}
                 </View>
                 <View style={{marginBottom: 30, padding: 20}}>
+                    <TouchableHighlight onPress={this.props.viewconfig.bind(null, this.state.devUUID)}>
+                        <Text style={{fontSize: 20, padding:20, textAlign: 'center'}}>View Configuration</Text>
+                    </TouchableHighlight>
                     <TouchableHighlight onPress={this.props.configure.bind(null, this.state.devUUID)}>
                         <Text style={{fontSize: 20, padding:20, textAlign: 'center'}}>Configure</Text>
                     </TouchableHighlight>
@@ -326,59 +329,6 @@ var PlugConfigure = React.createClass({
                 'rooms': ['waiting...'],
                 'owners': ['waiting...'],
                }
-    },
-    componentDidMount: function() {
-        //var self = this;
-        //util.QuerySmap("select distinct Metadata/Location/Building where Metadata/Plugstrip='"+this.props.devUUID+"';",
-        //    function(data) {
-        //        var bldgs = self.state.buildings;
-        //        if (data.length > 0) {
-        //            bldgs = util.PopOrAddToFront(bldgs, data[0]);
-        //            self.setState({'buildings': bldgs});
-        //        }
-        //    },
-        //    function(err) {console.log("errbldg", err);}
-        //);
-        //util.QuerySmap("select distinct Metadata/Location/Floor where Metadata/Plugstrip='"+this.props.devUUID+"';",
-        //    function(data) {
-        //        var floors = self.state.floors;
-        //        if (data.length > 0) {
-        //            floors = util.PopOrAddToFront(floors, data[0]);
-        //            self.setState({'floors': floors});
-        //        }
-        //    },
-        //    function(err) {}
-        //);
-        //util.QuerySmap("select distinct Metadata/Location/Room where Metadata/Plugstrip='"+this.props.devUUID+"';",
-        //    function(data) {
-        //        var rooms = self.state.rooms;
-        //        if (data.length > 0) {
-        //            rooms = util.PopOrAddToFront(rooms, data[0]);
-        //            self.setState({'rooms': rooms});
-        //        }
-        //    },
-        //    function(err) {}
-        //);
-        //util.QuerySmap("select distinct Metadata/Owner where Metadata/Plugstrip='"+this.props.devUUID+"';",
-        //    function(data) {
-        //        var owners = self.state.owners;
-        //        if (data.length > 0) {
-        //            owners = util.PopOrAddToFront(owners, data[0]);
-        //            self.setState({'owners': owners});
-        //        }
-        //    },
-        //    function(err) {}
-        //);
-        //util.QuerySmap("select distinct Metadata/Device/Type where Metadata/Plugstrip='"+this.props.devUUID+"';",
-        //    function(data) {
-        //        var devices = self.state.devices;
-        //        if (data.length > 0) {
-        //            devices = util.PopOrAddToFront(devices, data[0]);
-        //            self.setState({'devices': devices});
-        //        }
-        //    },
-        //    function(err) {}
-        //);
     },
     getBuildings: function() {
         var self = this;
@@ -487,7 +437,7 @@ var PlugConfigure = React.createClass({
         console.log(setCommand);
         util.QuerySmap(setCommand,
             function(d) {
-                ToastAndroid.show("successful!"+d, ToastAndroid.SHORT);
+                ToastAndroid.show("Successful!", ToastAndroid.SHORT);
             },
             function(err) {
                 ToastAndroid.show(err, ToastAndroid.SHORT);
@@ -611,6 +561,105 @@ var PlugConfigure = React.createClass({
                     </TouchableHighlight>
                 </View>
 
+            </View>
+        )
+    }
+});
+
+var ViewConfig = React.createClass({
+    getInitialState: function() {
+        return {
+            'building': 'fetching...',
+            'floor': 'fetching...',
+            'room': 'fetching...',
+            'owner': 'fetching...',
+            'device': 'fetching...',
+        }
+    },
+    componentDidMount: function() {
+        var self = this;
+        util.QuerySmap("select distinct Metadata/Location/Building where Metadata/Plugstrip='"+this.props.devUUID+"';",
+            function(data) {
+                if (data.length > 0) {
+                    self.setState({'building': data[0]});
+                } else {
+                    self.setState({'building': 'Not Configured'});
+                }
+            },
+            function(err) {console.log("errbldg", err);}
+        );
+        util.QuerySmap("select distinct Metadata/Location/Floor where Metadata/Plugstrip='"+this.props.devUUID+"';",
+            function(data) {
+                if (data.length > 0) {
+                    self.setState({'floor': data[0]});
+                } else {
+                    self.setState({'floor': 'Not Configured'});
+                }
+            },
+            function(err) {}
+        );
+        util.QuerySmap("select distinct Metadata/Location/Room where Metadata/Plugstrip='"+this.props.devUUID+"';",
+            function(data) {
+                if (data.length > 0) {
+                    self.setState({'room': data[0]});
+                } else {
+                    self.setState({'room': 'Not Configured'});
+                }
+            },
+            function(err) {}
+        );
+        util.QuerySmap("select distinct Metadata/Owner where Metadata/Plugstrip='"+this.props.devUUID+"';",
+            function(data) {
+                if (data.length > 0) {
+                    self.setState({'owner': data[0]});
+                } else {
+                    self.setState({'owner': 'Not Configured'});
+                }
+            },
+            function(err) {}
+        );
+        util.QuerySmap("select distinct Metadata/Device/Type where Metadata/Plugstrip='"+this.props.devUUID+"';",
+            function(data) {
+                if (data.length > 0) {
+                    self.setState({'device': data[0]});
+                } else {
+                    self.setState({'device': 'Not Configured'});
+                }
+            },
+            function(err) {}
+        );
+    },
+    render: function() {
+        return (
+            <View>
+                <Text style={{ fontSize: 24, textAlign: 'center' }}>
+                Plugstrip Configuration
+                </Text>
+                <View style={styles.formContainer}>
+                    <View style={styles.formRow}>
+                        <Text style={{ fontSize: 20, width: 90 }}> Building: </Text>
+                        <Text>{this.state.building}</Text>
+                    </View>
+                    <View style={styles.formRow}>
+                        <Text style={{ fontSize: 20, width: 90 }}> Floor </Text>
+                        <Text>{this.state.floor}</Text>
+                    </View>
+                    <View style={styles.formRow}>
+                        <Text style={{ fontSize: 20, width: 90 }}> Room </Text>
+                        <Text>{this.state.room}</Text>
+                    </View>
+                    <View style={styles.formRow}>
+                        <Text style={{ fontSize: 20, width: 90 }}> Owner </Text>
+                        <Text>{this.state.owner}</Text>
+                    </View>
+                    <View style={styles.formRow}>
+                        <Text style={{ fontSize: 20, width: 90 }}> Device </Text>
+                        <Text>{this.state.device}</Text>
+                    </View>
+                    <TouchableHighlight onPress={this.props.configure.bind(null, this.state.devUUID)}>
+                        <Text style={{fontSize: 20, padding:20, textAlign: 'center'}}>Configure</Text>
+                    </TouchableHighlight>
+                </View>
             </View>
         )
     }

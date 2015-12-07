@@ -53,7 +53,7 @@ public class BLEScanModule extends ReactContextBaseJavaModule {
     private BluetoothGattCharacteristic nodemac;
 
     private int mConnectionState = STATE_DISCONNECTED;
-    private boolean continueRetry = false;
+    private volatile boolean continueRetry = false;
 
     private static final int STATE_DISCONNECTED = 0;
     private static final int STATE_CONNECTING = 1;
