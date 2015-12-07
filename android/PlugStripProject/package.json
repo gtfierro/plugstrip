@@ -6,6 +6,9 @@
     "start": "react-native start"
   },
   "dependencies": {
+    "babel-core": "^6.3.15",
+    "chalk": "^1.1.1",
+    "graceful-fs": "^4.1.2",
     "react": "^0.14.2",
     "react-native": "^0.13.2",
     "react-native-button": "^1.2.1",
@@ -13,6 +16,7 @@
     "react-native-form": "^0.1.6",
     "react-native-progress-hud": "^1.0.3",
     "react-native-webintent": "^1.0.3",
-    "react-tap-event-plugin": "^0.2.1"
+    "react-tap-event-plugin": "^0.2.1",
+    "yeoman-environment": "^1.3.0"
   }
 }
