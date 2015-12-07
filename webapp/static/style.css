@@ -3,6 +3,7 @@ body {
     margin-left: 150px;
     margin-right: 150px;
     margin-bottom: 50px;
+    background: rgb(215, 215, 215);
 }
 
 h1 {
@@ -20,4 +21,9 @@ h2 {
 
 #bTurnOn, #bTurnOff {
     margin-top: 10px;
+}
+
+.well {
+    background: rgb(255, 255, 255);
+    border-radius: 20px !important;
 }
