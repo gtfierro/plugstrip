@@ -53,6 +53,7 @@ public class BLEScanModule extends ReactContextBaseJavaModule {
     private BluetoothGattCharacteristic nodemac;
 
     private int mConnectionState = STATE_DISCONNECTED;
+    private volatile boolean continueRetry = false;
 
     private static final int STATE_DISCONNECTED = 0;
     private static final int STATE_CONNECTING = 1;
@@ -179,8 +180,7 @@ public class BLEScanModule extends ReactContextBaseJavaModule {
                 BluetoothGattService plugstrip = gatt.getService(PLUG_STRIP_SERVICE_UUID);
                 //doMessage("found plugstrip service"+plugstrip);
                 plugdefault = plugstrip.getCharacteristic(PLUGDEFAULT);
-                mBluetoothGatt.readCharacteristic(plugdefault);
-
+                gatt.readCharacteristic(plugdefault);
             }
 
             @Override
@@ -207,9 +207,7 @@ public class BLEScanModule extends ReactContextBaseJavaModule {
             }
             @Override
             public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic plug, int status) {
-                if (status != BluetoothGatt.GATT_SUCCESS) {
-                    mBluetoothGatt.writeCharacteristic(plugdefault);
-                }
+                continueRetry = true;
             }
           };
 
@@ -325,17 +323,21 @@ public class BLEScanModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void setState(final int state, final String characteristic) {
-        new GuardedAsyncTask<Void, Void>(getReactApplicationContext()) {
-            @Override
-            protected void doInBackgroundGuarded(Void ...params) {
-                if (state == 1) {
-                    plugdefault.setValue(new byte[]{1});
-                } else {
-                    plugdefault.setValue(new byte[]{0});
+        for (int i=0;i<5;i++) {
+            continueRetry = false;
+            new GuardedAsyncTask<Void, Void>(getReactApplicationContext()) {
+                @Override
+                protected void doInBackgroundGuarded(Void ...params) {
+                    if (state == 1) {
+                        plugdefault.setValue(new byte[]{1});
+                    } else {
+                        plugdefault.setValue(new byte[]{0});
+                    }
+                    mBluetoothGatt.writeCharacteristic(plugdefault);
                 }
-                mBluetoothGatt.writeCharacteristic(plugdefault);
-            }
-        }.execute();
+            }.execute();
+            while (!continueRetry);
+        }
     }
 
     @ReactMethod
