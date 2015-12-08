@@ -6,6 +6,22 @@ $(document).ready(function() {
     $('#bCancel').hide()
     $('.deleteCell').hide()
 
+    $('#addEventForm').validate({
+        rules: {
+            hour: {
+                required: true,
+                number: true,
+                range: [0, 23]
+            },
+
+            minute: {
+                required: true,
+                number: true,
+                range: [0, 59]
+            }
+        }
+    })
+
     var plugState = $('#plugState').text()
     if (plugState === "Off") {
         $('#plugState').css('color', 'red')
@@ -68,40 +84,42 @@ $(document).ready(function() {
     })
 
     $('#bSaveEvent').click(function() {
-        var hour = $('#tHour').val()
-        var hourVal = parseInt(hour)
-        var minute = $('#tMinute').val()
-        var minuteVal = parseInt(minute)
-        if (minuteVal < 10 && minute.length < 2) {
-            minute = "0" + minute
-        }
-        var turnOnStr = $('#sAction').val()
-        var requestData = {
-            "hour": hourVal,
-            "minute": minuteVal,
-            "turnOn":  (turnOnStr === "Turn On")
-        }
-        var onSuccess = function(serverData, textStatus, request) {
-            var htmlString = "<tr class='clickable'>" +
-                                 "<td class='deleteCell'><button type='button'" +
-                                     "class='btn btn-danger tableDelBtn'>Remove Event</button></td>" +
-                                 "<td>" + hour + ":" + minute + "</td>" +
-                                 "<td>" + turnOnStr + "</td>" +
-                             "</tr>"
-            $('#actuationEvents').append(htmlString)
-            $('.deleteCell').hide()
-        }
+        if ($('#addEventForm').valid()) {
+            var hour = $('#tHour').val()
+            var hourVal = parseInt(hour)
+            var minute = $('#tMinute').val()
+            var minuteVal = parseInt(minute)
+            if (minuteVal < 10 && minute.length < 2) {
+                minute = "0" + minute
+            }
+            var turnOnStr = $('#sAction').val()
+            var requestData = {
+                "hour": hourVal,
+                "minute": minuteVal,
+                "turnOn":  (turnOnStr === "Turn On")
+            }
+            var onSuccess = function(serverData, textStatus, request) {
+                var htmlString = "<tr class='clickable'>" +
+                                     "<td class='deleteCell'><button type='button'" +
+                                         "class='btn btn-danger tableDelBtn'>Remove Event</button></td>" +
+                                     "<td>" + hour + ":" + minute + "</td>" +
+                                     "<td>" + turnOnStr + "</td>" +
+                                 "</tr>"
+                $('#actuationEvents').append(htmlString)
+                $('.deleteCell').hide()
+            }
 
-        var uuid = $('#uuid').val()
-        $.ajax({url: uuid + "/schedule", data: JSON.stringify(requestData),
-                contentType: "application/json", type: "POST", success: onSuccess})
-        $('#bAddEvent').show()
-        $('#bDelEvent').show()
-        $('#divHour').hide()
-        $('#divMinute').hide()
-        $('#divAction').hide()
-        $('#bSaveEvent').hide()
-        $('#bCancel').hide()
+            var uuid = $('#uuid').val()
+            $.ajax({url: uuid + "/schedule", data: JSON.stringify(requestData),
+                    contentType: "application/json", type: "POST", success: onSuccess})
+            $('#bAddEvent').show()
+            $('#bDelEvent').show()
+            $('#divHour').hide()
+            $('#divMinute').hide()
+            $('#divAction').hide()
+            $('#bSaveEvent').hide()
+            $('#bCancel').hide()
+        }
     })
 
     $('#actuationEvents').on('click', '.tableDelBtn', function() {

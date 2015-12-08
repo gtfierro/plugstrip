@@ -3,6 +3,8 @@
 <head>
     <!-- jQuery -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <!-- jQuery Form Validation -->
+    <script src="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.14.0/jquery.validate.min.js"></script>
     <!--Bootstrap:  Latest compiled and minified CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"
           integrity="sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ=="
@@ -102,13 +104,14 @@
     <button type='button' class='btn btn-danger' id='bDelEvent'>Remove Event from Schedule</button>
     <br/>
     <div class='row'>
+    <form id='addEventForm'>
         <div class='col-xs-4' id='divHour'>
             <label for='tHour'>Hour</label>
-            <input type='text' class='form-control' id='tHour'>
+            <input type='text' class='form-control' id='tHour' name='hour'>
         </div>
         <div class='col-xs-4' id='divMinute'>
             <label for='tMinute'>Minute</label>
-            <input type='text' class='form-control' id='tMinute'>
+            <input type='text' class='form-control' id='tMinute' name='minute'>
         </div>
         <div class='col-xs-4' id='divAction'>
             <label for='sAction'>Action</label>
@@ -117,6 +120,7 @@
                 <option>Turn Off</option>
             </select>
         </div>
+    </form>
     </div>
     <br/>
     <button type='button' class='btn btn-success' id='bSaveEvent'>Save Event</button>
