@@ -69,13 +69,15 @@ cord.new(function()
     local CURRENT_ADDR = 0x90
     local VOLTAGE_ADDR = 0x96
 
-    -- Initialize Current ADC in continuous mode
-    local current_adc = Reg:new(storm.i2c.EXT, CURRENT_ADDR)
-    current_adc:w(0x1, {0x04, 0x83})
-
     -- Initialize Voltage ADC in continuous mode
     local voltage_adc = Reg:new(storm.i2c.EXT, VOLTAGE_ADDR)
     voltage_adc:w(0x1, {0x04, 0x83})
+    print("Configured Voltage ADC")
+
+    -- Initialize Current ADC in continuous mode
+    local current_adc = Reg:new(storm.i2c.EXT, CURRENT_ADDR)
+    current_adc:w(0x1, {0x04, 0x83})
+    print("Configured Current ADC")
 
     storm.os.invokePeriodically(1 * storm.os.SECOND, reportdata, current_adc, voltage_adc)
 end)
