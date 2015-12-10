@@ -39,6 +39,9 @@ $(document).ready(function() {
                 if (jqXHR.status === 201) {
                     $('#bTurnOn').hide()
                     $('#bTurnOff').show()
+
+                    $('#plugState').text("On")
+                    $('#plugState').css('color', 'green')
                 }
             }
         )
@@ -50,6 +53,9 @@ $(document).ready(function() {
                 if (jqXHR.status === 201) {
                     $('#bTurnOff').hide()
                     $('#bTurnOn').show()
+
+                    $('#plugState').text("Off")
+                    $('#plugState').css('color', 'red')
                 }
             }
         )
