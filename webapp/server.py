@@ -2,6 +2,7 @@
 from flask import Flask
 from flask import render_template
 from flask import request
+from pytz import timezone
 
 import atexit
 import contextlib
@@ -97,8 +98,9 @@ def launchActuationCycle(addr, port, hour, minute, turn_on):
     global running_timers
 
     requested_time = datetime.time(hour, minute)
-    now = datetime.datetime.today()
-    requested_time_today = datetime.datetime.combine(datetime.date.today(), requested_time)
+    now = datetime.datetime.now(timezone('US/Pacific'))
+    requested_day = now.date()
+    requested_time_today = timezone('US/Pacific').localize(datetime.datetime.combine(requested_day, requested_time))
     if now < requested_time_today:
         # Scheduled time is later today
         delay = (requested_time_today - now).total_seconds()
@@ -352,4 +354,4 @@ if __name__ == '__main__':
         saved_tasks = json.loads(actuation_json)
         for (addr, port, hour, minute, turnOn) in saved_tasks:
             launchActuationCycle(addr, port, hour, minute, turnOn)
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host='0.0.0.0', port=80, threaded=True)
