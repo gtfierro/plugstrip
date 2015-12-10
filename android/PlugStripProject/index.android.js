@@ -28,6 +28,7 @@ var {
 } = React;
 
 var connected_macaddr = null;
+var ble_connected = false;
 
 var PlugStripProject = React.createClass({
   mixins: [ProgressHUD.Mixin],
@@ -52,7 +53,10 @@ var PlugStripProject = React.createClass({
             self.setState({macaddr: connected_macaddr, _screen: 'plugstrip'});
             return true;
         } else if (self.state._screen != 'menu') {
-            BLE.disconnect();
+            if (ble_connected) {
+                ble_connected = false;
+                BLE.disconnect();
+            }
             self.setState({_screen: 'menu'});
             return true;
         }
@@ -246,7 +250,11 @@ var BLEDevice = React.createClass({
     },
     componentWillMount: function() {
         var self = this;
+        if (ble_connected) {
+            BLE.disconnect();
+        }
         BLE.connect(self.props.macaddr, function(res) {
+            ble_connected = true;
             console.log("plugs", res);
             var uuid = res['nodemac'];
             delete res['nodemac'];
