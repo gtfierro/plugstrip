@@ -1,6 +1,8 @@
 import socket
+import numpy as np
 import copy
 import time
+import collections
 import msgpack
 import random
 import json
@@ -26,6 +28,8 @@ serverquery = "http://54.84.37.77:8079/api/query"
 
 sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
 sock.bind(("::", 5555))
+
+current_readings = collections.deque(maxlen=10)
 
 payload = {
     "Metadata": {
@@ -66,10 +70,13 @@ while True:
     json.dump(streams, open('streams.json','w'))
     res = msgpack.unpackb(data)
     # {'current': 4, 'state': 0, 'voltage': 208, 'power': 832}
-    current = float(res['current'])
+    print res
+    current_readings.append(float(res['current']))
+    current = np.mean(current_readings)
+    current = (11/8804.)* float(current) - 29.92
     state = float(res['state'])
-    voltage = float(res['voltage'])
-    power = float(res['power'])
+    voltage = 0. if res['voltage'] < 500 else 120.
+    power = voltage * current
     path = paths[mac]
     print addr, mac, uuid.uuid3(namespace, mac)
     payload["Metadata"]["Plugstrip"] = str(uuid.uuid3(namespace, mac))
