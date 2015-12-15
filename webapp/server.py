@@ -2,6 +2,7 @@
 from flask import Flask
 from flask import render_template
 from flask import request
+from pytz import timezone
 
 import atexit
 import contextlib
@@ -53,10 +54,10 @@ def actuateAndReschedule(addr, port, turn_on):
     timer.start()
     actuatePlug(addr, port, turn_on)
 
-def generatePermalinks(uuid):
+def generatePermalinks(power_uuid):
     hour_plot_request_params = {
         "autoupdate": True,
-        "streams": [{ "stream": uuid, "color": "#0000FF" }],
+        "streams": [{ "stream": power_uuid, "color": "#0000FF" }],
         "window_type": "now",
         "window_width": 60 * 60 * 1e9, # One Hour in Nanoseconds
         "tz": "America/Los_Angeles"
@@ -68,7 +69,7 @@ def generatePermalinks(uuid):
 
     day_plot_request_params = {
         "autoupdate": True,
-        "streams": [{ "stream": uuid, "color": "#0000FF" }],
+        "streams": [{ "stream": power_uuid, "color": "#0000FF" }],
         "window_type": "now",
         "window_width": 24 * 60 * 60 * 1e9, # One Day in Nanoseconds
         "tz": "America/Los_Angeles"
@@ -80,7 +81,7 @@ def generatePermalinks(uuid):
 
     week_plot_request_params = {
         "autoupdate": True,
-        "streams": [{ "stream": uuid, "color": "#0000FF" }],
+        "streams": [{ "stream": power_uuid, "color": "#0000FF" }],
         "window_type": "now",
         "window_width": 7 * 24 * 60 * 60 * 1e9, # One Week in Nanoseconds
         "tz": "America/Los_Angeles"
@@ -97,8 +98,9 @@ def launchActuationCycle(addr, port, hour, minute, turn_on):
     global running_timers
 
     requested_time = datetime.time(hour, minute)
-    now = datetime.datetime.today()
-    requested_time_today = datetime.datetime.combine(datetime.date.today(), requested_time)
+    now = datetime.datetime.now(timezone('US/Pacific'))
+    requested_day = now.date()
+    requested_time_today = timezone('US/Pacific').localize(datetime.datetime.combine(requested_day, requested_time))
     if now < requested_time_today:
         # Scheduled time is later today
         delay = (requested_time_today - now).total_seconds()
@@ -143,7 +145,8 @@ def writeActuationSchedule():
 def homePage():
     plug_data = issueSmapRequest('select * where Metadata/Type="plugstrip" and has Metadata/Owner and Path like "power$"')
     plugs = [ {"name": x["Metadata"]["Device"]["Type"], "location": "{}, {}".format(x["Metadata"]["Location"]["Room"],
-                x["Metadata"]["Location"]["Building"]), "owner": x["Metadata"]["Owner"], "uuid": x["uuid"]} for x in plug_data ]
+                x["Metadata"]["Location"]["Building"]), "owner": x["Metadata"]["Owner"], "uuid": x["Metadata"]["Plugstrip"]}
+                for x in plug_data ]
     uuid_to_names = { x["uuid"]: x["Metadata"]["Device"]["Type"] for x in plug_data }
 
     hour_data = issueSmapRequest('select data in (now-1hour, now) where Metadata/Type="plugstrip" and has Metadata/Owner and Path like "power$"')
@@ -183,17 +186,17 @@ def homePage():
 
 @app.route('/plugstrips/<uuid>', methods=['GET'])
 def plugPage(uuid):
-    plug_info = issueSmapRequest('select * where uuid="{}" and has Metadata/Owner and Path like "power$"'.format(uuid))
+    plug_info = issueSmapRequest('select * where Metadata/Plugstrip="{}" and has Metadata/Owner and Path like "power$"'.format(uuid))
     if plug_info is None:
         return "This plugstrip does not exist or has not yet reported data", 404
     name = plug_info[0]["Metadata"]["Device"]["Type"]
     location = "{}, {}".format(plug_info[0]["Metadata"]["Location"]["Room"],
                                plug_info[0]["Metadata"]["Location"]["Building"])
+    power_uuid = plug_info[0]["uuid"]
     owner = plug_info[0]["Metadata"]["Owner"]
     addr = plug_info[0]["Metadata"]["Address"]
     port = int(plug_info[0]["Metadata"]["Port"])
-    plugstrip_id = plug_info[0]["Metadata"]["Plugstrip"]
-    plug_state = issueSmapRequest('select data before now where Metadata/Plugstrip="{}" and has Metadata/Owner and Path like "state$"'.format(plugstrip_id))
+    plug_state = issueSmapRequest('select data before now where Metadata/Plugstrip="{}" and has Metadata/Owner and Path like "state$"'.format(uuid))
     if len(plug_state) == 0:
         state = "Unknown"
     else:
@@ -207,7 +210,7 @@ def plugPage(uuid):
                      for (ev_addr, ev_port, ev_hour, ev_minute, ev_turn_on) in actuation_tasks
                      if ev_addr == addr and ev_port == port ]
 
-    hour_data = issueSmapRequest('select data in (now-1hour, now) where uuid="{}"'.format(uuid))
+    hour_data = issueSmapRequest('select data in (now-1hour, now) where Metadata/Plugstrip="{}" and Path like "power$"'.format(uuid))
     if len(hour_data) == 0:
         hour_total = "No data found for last hour"
         hour_peak = "No data found for last hour"
@@ -220,7 +223,7 @@ def plugPage(uuid):
             hour_total = "{} W".format(sum(hour_reading_values))
             hour_peak = "{} W".format(max(hour_reading_values))
 
-    day_data= issueSmapRequest('select data in (now-1day, now) where uuid="{}"'.format(uuid))
+    day_data= issueSmapRequest('select data in (now-1day, now) where Metadata/Plugstrip="{}" and Path like "power$"'.format(uuid))
     if len(day_data) == 0:
         day_total = "No data found for last day"
         day_peak = "No data found for last day"
@@ -233,7 +236,7 @@ def plugPage(uuid):
             day_total = "{} W".format(sum(day_reading_values))
             day_peak = "{} W".format(max(day_reading_values))
 
-    week_data = issueSmapRequest('select data in (now-7days, now) where uuid="{}"'.format(uuid))
+    week_data = issueSmapRequest('select data in (now-7days, now) where Metadata/Plugstrip="{}" and Path like "power$"'.format(uuid))
     if len(week_data) == 0:
         week_total = "No data found for last week"
         week_peak = "No data found for last week"
@@ -246,7 +249,7 @@ def plugPage(uuid):
             week_total = "{} W".format(sum(week_reading_values))
             week_peak = "{} W".format(max(week_reading_values))
 
-    hour_plot_id, day_plot_id, week_plot_id = generatePermalinks(uuid)
+    hour_plot_id, day_plot_id, week_plot_id = generatePermalinks(power_uuid)
 
     template_args = {
         "name": name,
@@ -269,7 +272,7 @@ def plugPage(uuid):
 
 @app.route('/plugstrips/<uuid>', methods=['POST'])
 def handleActuation(uuid):
-    plug_info = issueSmapRequest('select Metadata/Address, Metadata/Port where uuid="{}" and has Metadata/Owner'.format(uuid))
+    plug_info = issueSmapRequest('select Metadata/Address, Metadata/Port where Metadata/Plugstrip="{}" and has Metadata/Owner'.format(uuid))
     if plug_info is None:
         return "This plugstrip does not exist or has not reported data and therefore cannot be actuated", 404
     addr = plug_info[0]["Metadata"]["Address"]
@@ -286,7 +289,7 @@ def handleActuation(uuid):
 
 @app.route('/plugstrips/<uuid>/schedule', methods=['POST'])
 def addActuationEvent(uuid):
-    plug_info = issueSmapRequest('select Metadata/Address, Metadata/Port where uuid="{}" and has Metadata/Owner'.format(uuid))
+    plug_info = issueSmapRequest('select Metadata/Address, Metadata/Port where Metadata/Plugstrip="{}" and has Metadata/Owner'.format(uuid))
     if plug_info is None:
         return "This plugstrip does not exist or has not reported data and therefore cannot be scheduled", 404
     addr = plug_info[0]["Metadata"]["Address"]
@@ -315,7 +318,7 @@ def addActuationEvent(uuid):
 
 @app.route('/plugstrips/<uuid>/schedule', methods=['DELETE'])
 def removeActuationEvent(uuid):
-    plug_info = issueSmapRequest('select Metadata/Address, Metadata/Port where uuid="{}" and has Metadata/Owner'.format(uuid))
+    plug_info = issueSmapRequest('select Metadata/Address, Metadata/Port where Metadata/Plugstrip="{}" and has Metadata/Owner'.format(uuid))
     if plug_info is None:
         return "This plugstrip does not exist or has not reported data and therefore cannot be scheduled", 404
     addr = plug_info[0]["Metadata"]["Address"]
@@ -351,4 +354,4 @@ if __name__ == '__main__':
         saved_tasks = json.loads(actuation_json)
         for (addr, port, hour, minute, turnOn) in saved_tasks:
             launchActuationCycle(addr, port, hour, minute, turnOn)
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host='0.0.0.0', port=80, threaded=True)
