@@ -40,7 +40,7 @@ public class BLEScanModule extends ReactContextBaseJavaModule {
     private BluetoothGatt mBluetoothGatt;
     private BluetoothGatt mBluetoothGattMAC;
     private final static int REQUEST_ENABLE_BT = 1;
-    private static final long SCAN_PERIOD = 5000; // scan for 5 seconds
+    private static final long SCAN_PERIOD = 2000; // scan for 2 seconds
     private Handler mHandler;
     private boolean mScanning;
     private final HashMap<String,BluetoothDevice>  myDevices = new HashMap();
